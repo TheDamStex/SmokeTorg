@@ -43,14 +43,14 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <TextBlock Text="{Binding Total, StringFormat=Итого: {0:C}}" Margin="0,8,0,0" FontSize="16" FontWeight="Bold"/>
-            <TextBlock Text="{Binding Tax, StringFormat=Налог: {0:C}}"/>
+            <TextBlock Text="{Binding Total, StringFormat='Итого: {0:C}'}" Margin="0,8,0,0" FontSize="16" FontWeight="Bold"/>
+            <TextBlock Text="{Binding Tax, StringFormat='Налог: {0:C}'}"/>
             <WrapPanel Margin="0,8,0,0">
                 <TextBlock Text="Наличные:" VerticalAlignment="Center"/>
                 <TextBox Width="100" Margin="6,0" Text="{Binding PaidCash}"/>
                 <TextBlock Text="Карта:" VerticalAlignment="Center"/>
                 <TextBox Width="100" Margin="6,0" Text="{Binding PaidCard}"/>
-                <TextBlock Text="{Binding Change, StringFormat=Сдача: {0:C}}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Change, StringFormat='Сдача: {0:C}'}" VerticalAlignment="Center"/>
             </WrapPanel>
             <Button Content="Провести продажу" Command="{Binding FinalizeCommand}" Width="200" Margin="0,8,0,0"/>
         </StackPanel>
