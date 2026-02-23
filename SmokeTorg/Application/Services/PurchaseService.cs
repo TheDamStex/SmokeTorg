@@ -12,8 +12,11 @@ public class PurchaseService(IPurchaseRepository purchaseRepository, InventorySe
     {
         purchase.Total = purchase.Items.Sum(i => i.Price * i.Quantity);
         if (purchase.Id == Guid.Empty)
-        {
             purchase.Id = Guid.NewGuid();
+
+        var existing = await purchaseRepository.GetByIdAsync(purchase.Id);
+        if (existing is null)
+        {
             await purchaseRepository.AddAsync(purchase);
         }
         else

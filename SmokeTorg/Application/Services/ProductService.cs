@@ -14,8 +14,11 @@ public class ProductService(IProductRepository productRepository)
             throw new InvalidOperationException("Название товара обязательно.");
 
         if (product.Id == Guid.Empty)
-        {
             product.Id = Guid.NewGuid();
+
+        var existing = await productRepository.GetByIdAsync(product.Id);
+        if (existing is null)
+        {
             await productRepository.AddAsync(product);
         }
         else
