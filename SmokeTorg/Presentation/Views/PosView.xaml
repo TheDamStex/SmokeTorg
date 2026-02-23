@@ -1,0 +1,58 @@
+<UserControl x:Class="SmokeTorg.Presentation.Views.PosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Margin="8">
+            <TextBlock Text="Поиск товара" FontWeight="Bold"/>
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,4"/>
+            <Button Content="Искать" Command="{Binding SearchCommand}" Margin="0,0,0,8"/>
+            <DataGrid ItemsSource="{Binding SearchResults}" AutoGenerateColumns="False" Height="400">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Цена" Binding="{Binding SalePrice}" Width="80"/>
+                    <DataGridTemplateColumn Header="+" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Добавить" Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Margin="8">
+            <TextBlock Text="Чек" FontWeight="Bold"/>
+            <DataGrid ItemsSource="{Binding Cart}" AutoGenerateColumns="False" Height="320">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*"/>
+                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="80"/>
+                    <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="80"/>
+                    <DataGridTemplateColumn Header="-" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="X" Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Text="{Binding Total, StringFormat=Итого: {0:C}}" Margin="0,8,0,0" FontSize="16" FontWeight="Bold"/>
+            <TextBlock Text="{Binding Tax, StringFormat=Налог: {0:C}}"/>
+            <WrapPanel Margin="0,8,0,0">
+                <TextBlock Text="Наличные:" VerticalAlignment="Center"/>
+                <TextBox Width="100" Margin="6,0" Text="{Binding PaidCash}"/>
+                <TextBlock Text="Карта:" VerticalAlignment="Center"/>
+                <TextBox Width="100" Margin="6,0" Text="{Binding PaidCard}"/>
+                <TextBlock Text="{Binding Change, StringFormat=Сдача: {0:C}}" VerticalAlignment="Center"/>
+            </WrapPanel>
+            <Button Content="Провести продажу" Command="{Binding FinalizeCommand}" Width="200" Margin="0,8,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

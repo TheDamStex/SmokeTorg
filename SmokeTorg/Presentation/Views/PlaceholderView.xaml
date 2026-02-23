@@ -1,0 +1,7 @@
+<UserControl x:Class="SmokeTorg.Presentation.Views.PlaceholderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <TextBlock Text="{Binding Title, StringFormat=Модуль '{0}' в разработке}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"/>
+    </Grid>
+</UserControl>
