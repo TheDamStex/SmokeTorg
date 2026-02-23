@@ -9,8 +9,8 @@
 
 ## Запуск
 ```bash
-dotnet build SmokeTorg/SmokeTorg.csproj
-dotnet run --project SmokeTorg/SmokeTorg.csproj
+dotnet build SmokeTorg.csproj
+dotnet run --project SmokeTorg.csproj
 ```
 
 ## Роли и доступ
