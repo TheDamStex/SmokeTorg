@@ -1,0 +1,52 @@
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Build
+# =========================
+**/bin/
+**/obj/
+
+# =========================
+# Logs
+# =========================
+TestResults/
+*.log
+*.cache
+
+# =========================
+# Database / Local data
+# =========================
+# Debug symbols and local DB files
+*.pdb
+*.db
+*.opendb
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Runtime/local data directory (e.g., JSON data store)
+Data/
+
+# Optional: ignore JSON runtime data while keeping config JSON tracked
+*.json
+!appsettings.json
+!appsettings.*.json
+!launchSettings.json
+!Properties/launchSettings.json
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
