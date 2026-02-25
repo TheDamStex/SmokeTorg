@@ -3,6 +3,8 @@ using SmokeTorg.Common.Base;
 using SmokeTorg.Common.Commands;
 using SmokeTorg.Domain.Enums;
 using SmokeTorg.Presentation.Models;
+using SmokeTorg.Presentation.Services;
+using SmokeTorg.Presentation.ViewModels.Dialogs;
 
 namespace SmokeTorg.Presentation.ViewModels;
 
@@ -13,16 +15,33 @@ public class MainViewModel : ViewModelBase
     private readonly ProductsViewModel _productsVm;
     private readonly PurchasesViewModel _purchasesVm;
     private readonly PlaceholderViewModel _placeholderVm;
+    private readonly IDialogService _dialogService;
+    private readonly GoodsReceiptViewModel _goodsReceiptViewModel;
+    private readonly PosWindowViewModel _posWindowViewModel;
+    private readonly StockViewModel _stockViewModel;
     private object? _currentViewModel;
     private bool _isHomeView = true;
 
-    public MainViewModel(LoginViewModel loginVm, PosViewModel posVm, ProductsViewModel productsVm, PurchasesViewModel purchasesVm, PlaceholderViewModel placeholderVm)
+    public MainViewModel(
+        LoginViewModel loginVm,
+        PosViewModel posVm,
+        ProductsViewModel productsVm,
+        PurchasesViewModel purchasesVm,
+        PlaceholderViewModel placeholderVm,
+        IDialogService dialogService,
+        GoodsReceiptViewModel goodsReceiptViewModel,
+        PosWindowViewModel posWindowViewModel,
+        StockViewModel stockViewModel)
     {
         _loginVm = loginVm;
         _posVm = posVm;
         _productsVm = productsVm;
         _purchasesVm = purchasesVm;
         _placeholderVm = placeholderVm;
+        _dialogService = dialogService;
+        _goodsReceiptViewModel = goodsReceiptViewModel;
+        _posWindowViewModel = posWindowViewModel;
+        _stockViewModel = stockViewModel;
 
         AppTitle = "SmokeTorg";
         StoreName = "Магазин: Central Store";
@@ -60,6 +79,19 @@ public class MainViewModel : ViewModelBase
         OpenSettingsCommand = new RelayCommand(_ => OpenPlaceholder("Настройки"));
         OpenPlaceholderCommand = new RelayCommand(p => OpenPlaceholder(p?.ToString() ?? "Модуль"));
         OpenHomeCommand = new RelayCommand(_ => OpenHome());
+
+        OpenGoodsReceiptCommand = new AsyncRelayCommand(async _ =>
+        {
+            await _goodsReceiptViewModel.InitializeAsync();
+            _dialogService.ShowDialog(_goodsReceiptViewModel);
+        });
+
+        OpenPosCommand = new RelayCommand(_ => _dialogService.ShowDialog(_posWindowViewModel));
+        OpenStockCommand = new AsyncRelayCommand(async _ =>
+        {
+            await _stockViewModel.LoadAsync();
+            _dialogService.ShowDialog(_stockViewModel);
+        });
     }
 
     public object? CurrentViewModel { get => _currentViewModel; set => SetProperty(ref _currentViewModel, value); }
@@ -89,6 +121,9 @@ public class MainViewModel : ViewModelBase
     public RelayCommand OpenSettingsCommand { get; }
     public RelayCommand OpenPlaceholderCommand { get; }
     public RelayCommand OpenHomeCommand { get; }
+    public AsyncRelayCommand OpenGoodsReceiptCommand { get; }
+    public RelayCommand OpenPosCommand { get; }
+    public AsyncRelayCommand OpenStockCommand { get; }
 
     private void Navigate(object? p)
     {
