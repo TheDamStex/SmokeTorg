@@ -24,7 +24,7 @@ public class WpfDialogService(IServiceProvider serviceProvider) : IDialogService
 
         var window = (Window)serviceProvider.GetRequiredService(windowType);
         window.DataContext = vm;
-        window.Owner = Application.Current.MainWindow;
+        window.Owner = System.Windows.Application.Current.MainWindow;
 
         if (vm is IDialogRequestClose closable)
         {
