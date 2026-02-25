@@ -2,12 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Переглянути склад"
-        Height="650"
-        Width="900"
+        Height="680"
+        Width="980"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
+        UseLayoutRounding="True"
         Background="{StaticResource WindowBackgroundBrush}">
-    <Grid Margin="18">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -15,33 +16,93 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Склад / Залишки" FontSize="26" FontWeight="SemiBold"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="1" Margin="0,14,0,10" Style="{StaticResource CardStyle}">
+            <TextBlock Text="Склад / Залишки"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       Foreground="#222"/>
+
+            <TextBlock Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Foreground="#666"
+                       FontWeight="SemiBold"
+                       Text="{Binding Items.Count, StringFormat='Всього позицій: {0}'}"/>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Margin="0,16,0,16"
+                Style="{StaticResource CardStyle}"
+                Padding="20,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                <CheckBox Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Content="Нижче мінімуму" IsChecked="{Binding BelowMinimumOnly}"/>
+                <TextBox Style="{StaticResource AppTextBoxStyle}"
+                         Height="38"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                <CheckBox Grid.Column="1"
+                          Margin="14,0,0,0"
+                          VerticalAlignment="Center"
+                          Content="Нижче мінімуму"
+                          IsChecked="{Binding BelowMinimumOnly}"/>
             </Grid>
         </Border>
 
-        <DataGrid Grid.Row="2" Style="{StaticResource AppDataGridStyle}" ItemsSource="{Binding ItemsView}" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*"/>
-                <DataGridTextColumn Header="Категорія" Binding="{Binding Category}" Width="220"/>
-                <DataGridTextColumn Header="Залишок" Binding="{Binding Quantity}" Width="110"/>
-                <DataGridTextColumn Header="Мін.залишок" Binding="{Binding MinQuantity}" Width="120"/>
-                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="150"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+            <DataGrid Style="{StaticResource AppDataGridStyle}"
+                      ItemsSource="{Binding ItemsView}"
+                      AutoGenerateColumns="False"
+                      BorderThickness="0">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="Нижче мінімуму">
+                                <Setter Property="Foreground" Value="#D92D20"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*"/>
+                    <DataGridTextColumn Header="Категорія" Binding="{Binding Category}" Width="220"/>
+                    <DataGridTextColumn Header="Залишок" Binding="{Binding Quantity}" Width="120"/>
+                    <DataGridTextColumn Header="Мін.залишок" Binding="{Binding MinQuantity}" Width="130"/>
+                    <DataGridTemplateColumn Header="Статус" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⚠ " Foreground="#D92D20">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Нижче мінімуму">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Status}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Оновити" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshCommand}"/>
-            <Button Content="Експорт (заглушка)" Margin="8,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ExportCommand}"/>
-            <Button Content="Закрити" Margin="8,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding CloseCommand}"/>
+            <Button Content="Експорт (заглушка)" Margin="12,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ExportCommand}"/>
+            <Button Content="Закрити" Margin="12,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding CloseCommand}"/>
         </StackPanel>
     </Grid>
 </Window>
