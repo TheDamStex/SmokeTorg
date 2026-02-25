@@ -7,8 +7,11 @@
         MinHeight="700"
         MinWidth="1100"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F5F5"
-        FontFamily="Segoe UI">
+        Background="#F7F8FA"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextFormattingMode="Display">
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:PosViewModel}">
             <views:PosView/>
@@ -24,7 +27,7 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid Margin="12">
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -32,53 +35,120 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource HeaderPanelStyle}">
+        <Border Grid.Row="0" Style="{StaticResource HeaderPanelStyle}" Background="White">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <Border Width="38" Height="38" CornerRadius="8" Background="#FF7A00" VerticalAlignment="Center">
-                        <TextBlock Text="ST" Foreground="White" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Margin="12,0,0,0">
-                        <TextBlock Text="{Binding AppTitle}" FontSize="20" FontWeight="Bold" Foreground="#333"/>
-                        <TextBlock Text="{Binding StoreName}" Foreground="#555"/>
-                        <TextBlock Text="{Binding DbName}" Foreground="#777"/>
+                <DockPanel Margin="0,0,0,14">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Border Width="40" Height="40" CornerRadius="10" Background="#FF7A00" VerticalAlignment="Center">
+                            <TextBlock Text="ST" Foreground="White" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Margin="12,0,0,0">
+                            <TextBlock Text="{Binding AppTitle}" FontSize="20" FontWeight="Bold" Foreground="#1F2937"/>
+                            <TextBlock Text="{Binding StoreName}" Foreground="#475467"/>
+                            <TextBlock Text="{Binding DbName}" Foreground="#667085" FontSize="12"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="#667085" FontWeight="SemiBold" Text="{Binding DateInfo}"/>
+                </DockPanel>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenHomeCommand}" Content="&#xE8A5;  Файл"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenProductsCommand}" Content="&#xE14C;  Товары"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPurchasesCommand}" Content="&#xE8B0;  Документы"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPOSCommand}" Content="&#xE7BF;  Оплата"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Склад" Content="&#xE8D1;  Склад"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenReportsCommand}" Content="&#xE9D9;  Отчеты"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Анализ" Content="&#xE9D2;  Анализ"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Маркетинг" Content="&#xE8D2;  Маркетинг"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenSettingsCommand}" Content="&#xE713;  Настройки"/>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Помощь" Content="&#xE897;  Помощь"/>
-                </StackPanel>
+                <WrapPanel Grid.Row="1">
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenHomeCommand}" Tag="{Binding IsHomeView}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Файл" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenProductsCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE14C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Товары" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPurchasesCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Документы" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPOSCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Оплата" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Склад">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8D1;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Склад" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenReportsCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Отчёты" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Анализ">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Анализ" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Маркетинг">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Маркетинг" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenSettingsCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Настройки" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Помощь">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Помощь" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,8,0,8">
-            <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPOSCommand}" Content="&#xE7BF;" ToolTip="POS"/>
-                <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenProductsCommand}" Content="&#xE14C;" ToolTip="Товары"/>
-                <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPurchasesCommand}" Content="&#xE8B0;" ToolTip="Закупки"/>
-                <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" Content="&#xE9D9;" ToolTip="Отчеты"/>
-                <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenSettingsCommand}" Content="&#xE713;" ToolTip="Настройки"/>
-                <Separator Margin="10,0" Width="1"/>
-                <TextBlock Text="{Binding CurrentUserInfo}" VerticalAlignment="Center" Foreground="#444"/>
-                <Button Content="Войти" Command="{Binding LoginCommand}" Margin="14,0,0,0"/>
-            </StackPanel>
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,10,0,10">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPOSCommand}" ToolTip="POS">
+                        <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenProductsCommand}" ToolTip="Товары">
+                        <TextBlock Text="&#xE14C;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPurchasesCommand}" ToolTip="Закупки">
+                        <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" ToolTip="Отчёты">
+                        <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenSettingsCommand}" ToolTip="Настройки">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CurrentUserInfo}" VerticalAlignment="Center" Foreground="#344054" Margin="0,0,14,0"/>
+                    <Button Content="Войти" Command="{Binding LoginCommand}" Padding="14,7" BorderBrush="#D0D5DD" BorderThickness="1" Background="White" Cursor="Hand"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,0,0,8">
+        <Grid Grid.Row="2" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -88,52 +158,52 @@
 
             <Border Grid.Column="0" Style="{StaticResource StatusCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Пользователь" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding UserName}"/>
-                    <TextBlock Text="{Binding Role}" Foreground="#666"/>
+                    <TextBlock Text="Пользователь" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="{Binding UserName}" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding Role}" Foreground="#667085"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="1" Style="{StaticResource StatusCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Лицензия / Касса" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding LicenseInfo}"/>
-                    <TextBlock Text="Касса #01" Foreground="#666"/>
+                    <TextBlock Text="Лицензия / Касса" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="{Binding LicenseInfo}" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="Касса #01" Foreground="#667085"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource StatusCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Дата / БД" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding DateInfo}"/>
-                    <TextBlock Text="{Binding DbInfo}" Foreground="#666"/>
+                    <TextBlock Text="Дата / БД" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="{Binding DateInfo}" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding DbInfo}" Foreground="#667085"/>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="3" Style="{StaticResource StatusCardStyle}">
+            <Border Grid.Column="3" Style="{StaticResource StatusCardStyle}" Margin="0">
                 <StackPanel>
-                    <TextBlock Text="Режим" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding ModeInfo}"/>
-                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#666"/>
+                    <TextBlock Text="Режим" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="{Binding ModeInfo}" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#667085"/>
                 </StackPanel>
             </Border>
         </Grid>
 
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="240"/>
-                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="14"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Padding="16">
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Padding="18">
                 <StackPanel>
-                    <Border Width="56" Height="56" CornerRadius="28" Background="#E2E2E2" HorizontalAlignment="Left">
-                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="#666" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border Width="60" Height="60" CornerRadius="30" Background="#FFF2E6" HorizontalAlignment="Left">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="#FF7A00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <TextBlock Text="{Binding UserName}" FontSize="16" FontWeight="Bold" Margin="0,10,0,2"/>
-                    <TextBlock Text="{Binding Role}" Foreground="#666"/>
-                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#777" Margin="0,12,0,0"/>
+                    <TextBlock Text="{Binding UserName}" FontSize="17" FontWeight="Bold" Margin="0,12,0,2" Foreground="#1F2937"/>
+                    <TextBlock Text="{Binding Role}" Foreground="#667085"/>
+                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#98A2B3" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -154,44 +224,84 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" CornerRadius="10" Padding="22" Margin="0,0,0,10">
+                <Border Grid.Row="0" CornerRadius="12" Padding="20,16" Margin="0,0,0,10">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#FFB347" Offset="0"/>
-                            <GradientStop Color="#FF7A00" Offset="1"/>
+                            <GradientStop Color="#FF8A00" Offset="0"/>
+                            <GradientStop Color="#FF6A00" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
-                    <StackPanel>
-                        <TextBlock Text="Ласкаво просимо до програми" Foreground="White" FontSize="20" FontWeight="SemiBold"/>
-                        <TextBlock Text="SMOKETORG" Foreground="White" FontSize="42" FontWeight="Bold"/>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="200"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Ласкаво просимо до програми" Foreground="White" FontSize="17" FontWeight="SemiBold"/>
+                            <TextBlock Text="SMOKETORG" Foreground="White" FontSize="34" FontWeight="Bold"/>
+                        </StackPanel>
+                        <Path Grid.Column="1" HorizontalAlignment="Right" Stretch="Uniform" Opacity="0.18" Fill="White" Data="M10,20 C42,-4 88,-2 128,22 C94,40 56,54 10,20 Z M40,54 C78,38 122,40 160,64 C122,80 84,88 40,54 Z"/>
+                    </Grid>
                 </Border>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPurchasesCommand}" Content="&#xE72A;  Почати прихід товару"/>
-                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPOSCommand}" Content="&#xE72A;  Відкрити реалізацію"/>
-                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Склад" Content="&#xE72A;  Переглянути склад"/>
-                </StackPanel>
+                <WrapPanel Grid.Row="1" Margin="0,0,0,12">
+                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPurchasesCommand}">
+                        <Grid MinWidth="250">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1" Text="Почати прихід товару" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="16" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        </Grid>
+                    </Button>
+                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPOSCommand}">
+                        <Grid MinWidth="250">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1" Text="Відкрити реалізацію" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="16" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        </Grid>
+                    </Button>
+                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Склад">
+                        <Grid MinWidth="250">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE8D1;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1" Text="Переглянути склад" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="16" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        </Grid>
+                    </Button>
+                </WrapPanel>
 
                 <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="НОВИНИ" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock Text="НОВОСТИ" FontSize="20" FontWeight="Bold" Margin="0,0,0,8" Foreground="#1F2937"/>
                         <ItemsControl ItemsSource="{Binding News}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#F3F3F3" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                    <Border Background="White" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="64"/>
+                                                <ColumnDefinition Width="56"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="52" Height="52" Background="#FFE6CC" CornerRadius="6" VerticalAlignment="Top">
-                                                <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" Foreground="#FF7A00" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Border Width="44" Height="44" Background="#FFF3E6" CornerRadius="8" VerticalAlignment="Top">
+                                                <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" Foreground="#FF7A00" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <StackPanel Grid.Column="1">
-                                                <TextBlock Text="{Binding Date, StringFormat='{}{0:dd.MM.yyyy}'}" Foreground="#777" FontSize="12"/>
-                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="15" Margin="0,2,0,4"/>
-                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="#444"/>
+                                                <TextBlock Text="{Binding Date, StringFormat='{}{0:dd.MM.yyyy}'}" Foreground="#667085" FontSize="12"/>
+                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="15" Foreground="#1F2937" Margin="0,1,0,3"/>
+                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="#475467"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
