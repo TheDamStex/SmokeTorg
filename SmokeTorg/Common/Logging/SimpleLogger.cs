@@ -1,4 +1,5 @@
 namespace SmokeTorg.Common.Logging;
+using System.IO;
 
 public class SimpleLogger : ILogger
 {
