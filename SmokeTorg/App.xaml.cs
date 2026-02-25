@@ -8,7 +8,10 @@ using SmokeTorg.Infrastructure.Repositories.Json;
 using SmokeTorg.Infrastructure.Repositories.Sql;
 using SmokeTorg.Infrastructure.Seed;
 using SmokeTorg.Infrastructure.Storage;
+using SmokeTorg.Presentation.Services;
 using SmokeTorg.Presentation.ViewModels;
+using SmokeTorg.Presentation.ViewModels.Dialogs;
+using SmokeTorg.Presentation.Views.Windows;
 
 namespace SmokeTorg;
 
@@ -53,7 +56,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<PurchaseService>();
         services.AddSingleton<InventoryService>();
         services.AddSingleton<ReportsService>();
+        services.AddSingleton<SupplierService>();
+        services.AddSingleton<CategoryService>();
         services.AddSingleton<DataSeeder>();
+
+        services.AddSingleton<IDialogService, WpfDialogService>();
 
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<LoginViewModel>();
@@ -61,6 +68,15 @@ public partial class App : System.Windows.Application
         services.AddSingleton<PosViewModel>();
         services.AddSingleton<PurchasesViewModel>();
         services.AddSingleton<PlaceholderViewModel>();
+
+        services.AddSingleton<GoodsReceiptViewModel>();
+        services.AddSingleton<PosWindowViewModel>();
+        services.AddSingleton<StockViewModel>();
+
+        services.AddTransient<AddSupplierWindow>();
+        services.AddTransient<GoodsReceiptWindow>();
+        services.AddTransient<PosWindow>();
+        services.AddTransient<StockWindow>();
 
         services.AddSingleton<MainWindow>();
 
