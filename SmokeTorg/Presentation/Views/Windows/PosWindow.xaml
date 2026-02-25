@@ -89,6 +89,7 @@
                               Height="38"
                               ItemsSource="{Binding SearchResults}"
                               DisplayMemberPath="Name"
+                              Style="{StaticResource AppComboBoxStyle}"
                               SelectedItem="{Binding SelectedProduct}"/>
                     <Button Grid.Column="3"
                             Margin="10,0,0,0"
@@ -129,7 +130,7 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Ціна" Binding="{Binding Price}" Width="120"/>
+                    <DataGridTextColumn Header="Ціна" Binding="{Binding Price, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" Width="120"/>
                     <DataGridTextColumn Header="Сума" Binding="{Binding Sum}" Width="140" IsReadOnly="True"/>
                     <DataGridTemplateColumn Header="" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
@@ -188,13 +189,14 @@
                               Margin="0,6,0,0"
                               Height="36"
                               ItemsSource="{Binding PaymentOptions}"
+                              Style="{StaticResource AppComboBoxStyle}"
                               SelectedItem="{Binding PaymentType}"/>
 
                     <TextBlock Grid.Row="2" Margin="0,12,0,0" Text="Отримано" FontWeight="SemiBold"/>
                     <TextBox Grid.Row="3"
                              Margin="0,6,0,0"
                              Style="{StaticResource AppTextBoxStyle}"
-                             Text="{Binding Received, UpdateSourceTrigger=PropertyChanged}"/>
+                             Text="{Binding Received, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
 
                     <TextBlock Grid.Row="4"
                                Margin="0,12,0,0"
@@ -220,7 +222,8 @@
             <Button Content="Оплатити"
                     Margin="12,0,0,0"
                     Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding PayCommand}"/>
+                    Command="{Binding PayCommand}"
+                    IsEnabled="{Binding HasErrors, Converter={StaticResource InverseBoolConverter}}"/>
         </StackPanel>
     </Grid>
 </Window>

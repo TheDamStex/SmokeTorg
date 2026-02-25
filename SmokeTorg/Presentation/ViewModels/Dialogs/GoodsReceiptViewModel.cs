@@ -9,21 +9,40 @@ using SmokeTorg.Presentation.Services;
 
 namespace SmokeTorg.Presentation.ViewModels.Dialogs;
 
-public class GoodsReceiptViewModel(
-    SupplierService supplierService,
-    ProductService productService,
-    PurchaseService purchaseService,
-    IDialogService dialogService) : ViewModelBase, IDialogRequestClose
+public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
 {
-    private readonly SupplierService _supplierService = supplierService;
-    private readonly ProductService _productService = productService;
-    private readonly PurchaseService _purchaseService = purchaseService;
-    private readonly IDialogService _dialogService = dialogService;
+    private readonly SupplierService _supplierService;
+    private readonly ProductService _productService;
+    private readonly PurchaseService _purchaseService;
+    private readonly IDialogService _dialogService;
 
     private Supplier? _selectedSupplier;
     private Product? _selectedSearchProduct;
     private string _productSearchText = string.Empty;
     private string _barcodeInput = string.Empty;
+
+    public GoodsReceiptViewModel(
+        SupplierService supplierService,
+        ProductService productService,
+        PurchaseService purchaseService,
+        IDialogService dialogService)
+    {
+        _supplierService = supplierService;
+        _productService = productService;
+        _purchaseService = purchaseService;
+        _dialogService = dialogService;
+
+        SearchProductCommand = new AsyncRelayCommand(async _ => await SearchProductAsync());
+        AddByBarcodeCommand = new AsyncRelayCommand(async _ => await AddByBarcodeAsync());
+        AddProductCommand = new RelayCommand(AddProductFromParameter);
+        RemoveItemCommand = new RelayCommand(RemoveItem);
+        SaveDraftCommand = new AsyncRelayCommand(async _ => await SaveDraftAsync(), _ => CanSaveDraft());
+        PostCommand = new AsyncRelayCommand(async _ => await PostAsync(), _ => CanPost());
+        CancelCommand = new RelayCommand(_ => RequestClose?.Invoke(this, false));
+        AddSupplierCommand = new AsyncRelayCommand(OpenCreateSupplierDialogAsync);
+
+        Items.CollectionChanged += (_, _) => OnItemsChanged();
+    }
 
     public ObservableCollection<Supplier> Suppliers { get; } = [];
     public ObservableCollection<ReceiptLineItem> Items { get; } = [];
@@ -32,28 +51,29 @@ public class GoodsReceiptViewModel(
     public Supplier? SelectedSupplier
     {
         get => _selectedSupplier;
-        set => SetProperty(ref _selectedSupplier, value);
+        set
+        {
+            if (SetProperty(ref _selectedSupplier, value))
+            {
+                RevalidateCommands();
+            }
+        }
     }
 
-    public string ProductSearchText
-    {
-        get => _productSearchText;
-        set => SetProperty(ref _productSearchText, value);
-    }
-
-    public string BarcodeInput
-    {
-        get => _barcodeInput;
-        set => SetProperty(ref _barcodeInput, value);
-    }
-
-    public Product? SelectedSearchProduct
-    {
-        get => _selectedSearchProduct;
-        set => SetProperty(ref _selectedSearchProduct, value);
-    }
+    public string ProductSearchText { get => _productSearchText; set => SetProperty(ref _productSearchText, value); }
+    public string BarcodeInput { get => _barcodeInput; set => SetProperty(ref _barcodeInput, value); }
+    public Product? SelectedSearchProduct { get => _selectedSearchProduct; set => SetProperty(ref _selectedSearchProduct, value); }
 
     public decimal Total => Items.Sum(i => i.Sum);
+
+    public AsyncRelayCommand SearchProductCommand { get; }
+    public AsyncRelayCommand AddByBarcodeCommand { get; }
+    public RelayCommand AddProductCommand { get; }
+    public RelayCommand RemoveItemCommand { get; }
+    public AsyncRelayCommand SaveDraftCommand { get; }
+    public AsyncRelayCommand PostCommand { get; }
+    public RelayCommand CancelCommand { get; }
+    public AsyncRelayCommand AddSupplierCommand { get; }
 
     public event EventHandler<bool?>? RequestClose;
 
@@ -61,24 +81,65 @@ public class GoodsReceiptViewModel(
     {
         await ReloadSuppliers();
         SelectedSupplier ??= Suppliers.FirstOrDefault();
+        ValidateAll();
+        RevalidateCommands();
     }
 
-    public AsyncRelayCommand SearchProductCommand => new(async _ =>
+    protected override void ValidateProperty(string propertyName)
+    {
+        ClearErrors(propertyName);
+
+        switch (propertyName)
+        {
+            case nameof(SelectedSupplier):
+                if (SelectedSupplier is null)
+                {
+                    AddError(nameof(SelectedSupplier), "Поле обов’язкове");
+                }
+                break;
+
+            case nameof(Items):
+                if (Items.Count == 0)
+                {
+                    AddError(nameof(Items), "Додайте хоча б одну позицію");
+                }
+                else if (Items.Any(x => x.Quantity <= 0 || x.PurchasePrice < 0))
+                {
+                    AddError(nameof(Items), "Перевірте кількість та ціну в позиціях");
+                }
+                break;
+        }
+    }
+
+    protected override void OnErrorsChanged(string propertyName)
+    {
+        RevalidateCommands();
+    }
+
+    public async Task ReloadSuppliers()
+    {
+        Suppliers.Clear();
+        foreach (var supplier in await _supplierService.GetAllAsync()) Suppliers.Add(supplier);
+    }
+
+    public void SelectCreatedSupplier(Supplier createdSupplier)
+    {
+        SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == createdSupplier.Id);
+    }
+
+    private async Task SearchProductAsync()
     {
         ProductSearchResults.Clear();
         foreach (var product in await _productService.SearchAsync(ProductSearchText.Trim()))
         {
             ProductSearchResults.Add(product);
         }
-    });
+    }
 
-    public AsyncRelayCommand AddByBarcodeCommand => new(async _ =>
+    private async Task AddByBarcodeAsync()
     {
         var barcode = BarcodeInput.Trim();
-        if (string.IsNullOrWhiteSpace(barcode))
-        {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(barcode)) return;
 
         var product = await _productService.FindByBarcode(barcode);
         if (product is null)
@@ -89,60 +150,54 @@ public class GoodsReceiptViewModel(
 
         AddProduct(product);
         BarcodeInput = string.Empty;
-    });
+    }
 
-    public RelayCommand AddProductCommand => new(p =>
+    private void AddProductFromParameter(object? parameter)
     {
-        if (p is Product product)
+        if (parameter is Product product)
         {
             AddProduct(product);
         }
-    });
+    }
 
-    public RelayCommand RemoveItemCommand => new(p =>
+    private void RemoveItem(object? parameter)
     {
-        if (p is not ReceiptLineItem item)
+        if (parameter is not ReceiptLineItem item) return;
+
+        item.PropertyChanged -= ItemOnPropertyChanged;
+        Items.Remove(item);
+        OnItemsChanged();
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        ValidateProperty(nameof(Items));
+        if (!CanSaveDraft())
         {
+            MessageBox.Show("Виправте помилки у формі.", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        Items.Remove(item);
-        OnPropertyChanged(nameof(Total));
-    });
-
-    public AsyncRelayCommand SaveDraftCommand => new(async _ =>
-    {
         var purchase = BuildPurchase(DocumentStatus.Draft);
         await _purchaseService.SaveAsync(purchase);
         MessageBox.Show("Чернетку приходу збережено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
-    }, _ => CanSave());
+    }
 
-    public AsyncRelayCommand PostCommand => new(async _ =>
+    private async Task PostAsync()
     {
+        ValidateAll();
+        if (HasErrors)
+        {
+            MessageBox.Show("Виправте помилки у формі.", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         var purchase = BuildPurchase(DocumentStatus.Draft);
         await _purchaseService.SaveAsync(purchase);
         await _purchaseService.PostAsync(purchase);
 
         MessageBox.Show("Документ приходу проведено та залишки оновлено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
         RequestClose?.Invoke(this, true);
-    }, _ => CanSave());
-
-    public RelayCommand CancelCommand => new(_ => RequestClose?.Invoke(this, false));
-
-    public AsyncRelayCommand AddSupplierCommand => new(OpenCreateSupplierDialogAsync);
-
-    public async Task ReloadSuppliers()
-    {
-        Suppliers.Clear();
-        foreach (var supplier in await _supplierService.GetAllAsync())
-        {
-            Suppliers.Add(supplier);
-        }
-    }
-
-    public void SelectCreatedSupplier(Supplier createdSupplier)
-    {
-        SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == createdSupplier.Id);
     }
 
     private async Task OpenCreateSupplierDialogAsync(object? _)
@@ -155,11 +210,13 @@ public class GoodsReceiptViewModel(
         }
     }
 
-    private bool CanSave() => SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0 && i.PurchasePrice > 0);
+    private bool CanSaveDraft() => Items.Count > 0 && Items.All(i => i.Quantity > 0);
+
+    private bool CanPost() => !HasErrors && SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0 && i.PurchasePrice >= 0);
 
     private Purchase BuildPurchase(DocumentStatus status) => new()
     {
-        SupplierId = SelectedSupplier!.Id,
+        SupplierId = SelectedSupplier?.Id ?? Guid.Empty,
         Date = DateTime.Now,
         Status = status,
         Items = Items.Select(i => new PurchaseItem
@@ -185,7 +242,7 @@ public class GoodsReceiptViewModel(
                 Quantity = 1,
                 PurchasePrice = product.PurchasePrice <= 0 ? product.SalePrice : product.PurchasePrice
             };
-            line.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Total));
+            line.PropertyChanged += ItemOnPropertyChanged;
             Items.Add(line);
         }
         else
@@ -193,7 +250,28 @@ public class GoodsReceiptViewModel(
             existing.Quantity += 1;
         }
 
+        OnItemsChanged();
+    }
+
+    private void ItemOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ReceiptLineItem.Quantity) or nameof(ReceiptLineItem.PurchasePrice) or nameof(ReceiptLineItem.HasErrors))
+        {
+            OnItemsChanged();
+        }
+    }
+
+    private void OnItemsChanged()
+    {
         OnPropertyChanged(nameof(Total));
+        ValidateProperty(nameof(Items));
+        RevalidateCommands();
+    }
+
+    private void RevalidateCommands()
+    {
+        SaveDraftCommand.RaiseCanExecuteChanged();
+        PostCommand.RaiseCanExecuteChanged();
     }
 }
 
@@ -231,4 +309,19 @@ public class ReceiptLineItem : ViewModelBase
     }
 
     public decimal Sum => Quantity * PurchasePrice;
+
+    protected override void ValidateProperty(string propertyName)
+    {
+        ClearErrors(propertyName);
+
+        if (propertyName == nameof(Quantity) && Quantity <= 0)
+        {
+            AddError(nameof(Quantity), "Кількість має бути > 0");
+        }
+
+        if (propertyName == nameof(PurchasePrice) && PurchasePrice < 0)
+        {
+            AddError(nameof(PurchasePrice), "Ціна має бути >= 0");
+        }
+    }
 }
