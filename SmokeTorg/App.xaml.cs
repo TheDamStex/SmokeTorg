@@ -73,7 +73,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<PosWindowViewModel>();
         services.AddSingleton<StockViewModel>();
 
-        services.AddTransient<AddSupplierWindow>();
+        services.AddTransient<SupplierCreateWindow>();
         services.AddTransient<GoodsReceiptWindow>();
         services.AddTransient<PosWindow>();
         services.AddTransient<StockWindow>();

@@ -12,7 +12,7 @@ public class WpfDialogService(IServiceProvider serviceProvider) : IDialogService
         [typeof(GoodsReceiptViewModel)] = typeof(GoodsReceiptWindow),
         [typeof(PosWindowViewModel)] = typeof(PosWindow),
         [typeof(StockViewModel)] = typeof(StockWindow),
-        [typeof(AddSupplierViewModel)] = typeof(AddSupplierWindow)
+        [typeof(SupplierCreateViewModel)] = typeof(SupplierCreateWindow)
     };
 
     public bool? ShowDialog<TViewModel>(TViewModel vm) where TViewModel : class

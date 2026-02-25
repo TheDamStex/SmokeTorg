@@ -15,6 +15,11 @@ public class GoodsReceiptViewModel(
     PurchaseService purchaseService,
     IDialogService dialogService) : ViewModelBase, IDialogRequestClose
 {
+    private readonly SupplierService _supplierService = supplierService;
+    private readonly ProductService _productService = productService;
+    private readonly PurchaseService _purchaseService = purchaseService;
+    private readonly IDialogService _dialogService = dialogService;
+
     private Supplier? _selectedSupplier;
     private Product? _selectedSearchProduct;
     private string _productSearchText = string.Empty;
@@ -54,19 +59,14 @@ public class GoodsReceiptViewModel(
 
     public async Task InitializeAsync()
     {
-        Suppliers.Clear();
-        foreach (var supplier in await supplierService.GetAllAsync())
-        {
-            Suppliers.Add(supplier);
-        }
-
+        await ReloadSuppliers();
         SelectedSupplier ??= Suppliers.FirstOrDefault();
     }
 
     public AsyncRelayCommand SearchProductCommand => new(async _ =>
     {
         ProductSearchResults.Clear();
-        foreach (var product in await productService.SearchAsync(ProductSearchText.Trim()))
+        foreach (var product in await _productService.SearchAsync(ProductSearchText.Trim()))
         {
             ProductSearchResults.Add(product);
         }
@@ -80,7 +80,7 @@ public class GoodsReceiptViewModel(
             return;
         }
 
-        var product = await productService.FindByBarcode(barcode);
+        var product = await _productService.FindByBarcode(barcode);
         if (product is null)
         {
             MessageBox.Show("Товар не знайдено за штрихкодом", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -113,15 +113,15 @@ public class GoodsReceiptViewModel(
     public AsyncRelayCommand SaveDraftCommand => new(async _ =>
     {
         var purchase = BuildPurchase(DocumentStatus.Draft);
-        await purchaseService.SaveAsync(purchase);
+        await _purchaseService.SaveAsync(purchase);
         MessageBox.Show("Чернетку приходу збережено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
     }, _ => CanSave());
 
     public AsyncRelayCommand PostCommand => new(async _ =>
     {
         var purchase = BuildPurchase(DocumentStatus.Draft);
-        await purchaseService.SaveAsync(purchase);
-        await purchaseService.PostAsync(purchase);
+        await _purchaseService.SaveAsync(purchase);
+        await _purchaseService.PostAsync(purchase);
 
         MessageBox.Show("Документ приходу проведено та залишки оновлено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
         RequestClose?.Invoke(this, true);
@@ -129,15 +129,31 @@ public class GoodsReceiptViewModel(
 
     public RelayCommand CancelCommand => new(_ => RequestClose?.Invoke(this, false));
 
-    public AsyncRelayCommand AddSupplierCommand => new(async _ =>
+    public AsyncRelayCommand AddSupplierCommand => new(OpenCreateSupplierDialogAsync);
+
+    public async Task ReloadSuppliers()
     {
-        var vm = new AddSupplierViewModel(supplierService);
-        if (dialogService.ShowDialog(vm) == true && vm.CreatedSupplier is not null)
+        Suppliers.Clear();
+        foreach (var supplier in await _supplierService.GetAllAsync())
         {
-            await InitializeAsync();
-            SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == vm.CreatedSupplier.Id);
+            Suppliers.Add(supplier);
         }
-    });
+    }
+
+    public void SelectCreatedSupplier(Supplier createdSupplier)
+    {
+        SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == createdSupplier.Id);
+    }
+
+    private async Task OpenCreateSupplierDialogAsync(object? _)
+    {
+        var vm = new SupplierCreateViewModel(_supplierService);
+        if (_dialogService.ShowDialog(vm) == true && vm.CreatedSupplier is not null)
+        {
+            await ReloadSuppliers();
+            SelectCreatedSupplier(vm.CreatedSupplier);
+        }
+    }
 
     private bool CanSave() => SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0 && i.PurchasePrice > 0);
 
