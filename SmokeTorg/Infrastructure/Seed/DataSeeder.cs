@@ -34,8 +34,8 @@ public class DataSeeder(
             await categoryRepository.AddAsync(c1);
             await categoryRepository.AddAsync(c2);
 
-            await productRepository.AddAsync(new Product { Name = "Кола 0.5", Sku = "DR-001", Barcode = "460000001", CategoryId = c1.Id, PurchasePrice = 30, SalePrice = 55, MinStock = 10 });
-            await productRepository.AddAsync(new Product { Name = "Чипсы 80г", Sku = "SN-001", Barcode = "460000002", CategoryId = c2.Id, PurchasePrice = 40, SalePrice = 75, MinStock = 15 });
+            await productRepository.AddAsync(new Product { Name = "Кола 0.5", Sku = "DR-001", Barcode = "4820000000001", CategoryId = c1.Id, PurchasePrice = 30, SalePrice = 55, MinStock = 10 });
+            await productRepository.AddAsync(new Product { Name = "Чипсы 80г", Sku = "SN-001", Barcode = "4820000000002", CategoryId = c2.Id, PurchasePrice = 40, SalePrice = 75, MinStock = 15 });
         }
 
         if (!(await settingsRepository.GetAllAsync()).Any())

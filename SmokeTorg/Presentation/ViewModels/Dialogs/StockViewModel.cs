@@ -85,6 +85,7 @@ public class StockViewModel : ViewModelBase, IDialogRequestClose
             Items.Add(new StockRowItem
             {
                 ProductName = product.Name,
+                Barcode = product.Barcode,
                 Category = categoryMap.GetValueOrDefault(product.CategoryId, "Без категорії"),
                 Quantity = row.Quantity,
                 MinQuantity = min,
@@ -104,6 +105,7 @@ public class StockViewModel : ViewModelBase, IDialogRequestClose
 
         var passesText = string.IsNullOrWhiteSpace(SearchText)
             || row.ProductName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+            || row.Barcode.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
             || row.Category.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
 
         var passesLowStock = !BelowMinimumOnly || row.Quantity < row.MinQuantity;
@@ -114,6 +116,7 @@ public class StockViewModel : ViewModelBase, IDialogRequestClose
 public class StockRowItem
 {
     public string ProductName { get; set; } = string.Empty;
+    public string Barcode { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal MinQuantity { get; set; }

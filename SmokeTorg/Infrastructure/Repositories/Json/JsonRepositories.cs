@@ -13,6 +13,17 @@ public class JsonProductRepository(IStorageProvider storage) : JsonRepositoryBas
                            || p.Barcode.Contains(text, StringComparison.OrdinalIgnoreCase)
                            || p.Sku.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
     }
+
+    public async Task<Product?> GetByBarcode(string barcode)
+    {
+        if (string.IsNullOrWhiteSpace(barcode))
+        {
+            return null;
+        }
+
+        var normalized = barcode.Trim();
+        return (await GetAllAsync()).FirstOrDefault(p => p.Barcode.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 public class JsonCategoryRepository(IStorageProvider storage) : JsonRepositoryBase<Category>(storage, "categories.json"), ICategoryRepository;

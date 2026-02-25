@@ -18,6 +18,7 @@ public class GoodsReceiptViewModel(
     private Supplier? _selectedSupplier;
     private Product? _selectedSearchProduct;
     private string _productSearchText = string.Empty;
+    private string _barcodeInput = string.Empty;
 
     public ObservableCollection<Supplier> Suppliers { get; } = [];
     public ObservableCollection<ReceiptLineItem> Items { get; } = [];
@@ -33,6 +34,12 @@ public class GoodsReceiptViewModel(
     {
         get => _productSearchText;
         set => SetProperty(ref _productSearchText, value);
+    }
+
+    public string BarcodeInput
+    {
+        get => _barcodeInput;
+        set => SetProperty(ref _barcodeInput, value);
     }
 
     public Product? SelectedSearchProduct
@@ -65,32 +72,31 @@ public class GoodsReceiptViewModel(
         }
     });
 
-    public RelayCommand AddProductCommand => new(p =>
+    public AsyncRelayCommand AddByBarcodeCommand => new(async _ =>
     {
-        if (p is not Product product)
+        var barcode = BarcodeInput.Trim();
+        if (string.IsNullOrWhiteSpace(barcode))
         {
             return;
         }
 
-        var existing = Items.FirstOrDefault(i => i.ProductId == product.Id);
-        if (existing is null)
+        var product = await productService.FindByBarcode(barcode);
+        if (product is null)
         {
-            var line = new ReceiptLineItem
-            {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                Quantity = 1,
-                PurchasePrice = product.PurchasePrice <= 0 ? product.SalePrice : product.PurchasePrice
-            };
-            line.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Total));
-            Items.Add(line);
-        }
-        else
-        {
-            existing.Quantity += 1;
+            MessageBox.Show("Товар не знайдено за штрихкодом", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
         }
 
-        OnPropertyChanged(nameof(Total));
+        AddProduct(product);
+        BarcodeInput = string.Empty;
+    });
+
+    public RelayCommand AddProductCommand => new(p =>
+    {
+        if (p is Product product)
+        {
+            AddProduct(product);
+        }
     });
 
     public RelayCommand RemoveItemCommand => new(p =>
@@ -144,10 +150,35 @@ public class GoodsReceiptViewModel(
         {
             ProductId = i.ProductId,
             ProductName = i.ProductName,
+            BarcodeDisplay = i.Barcode,
             Quantity = i.Quantity,
             Price = i.PurchasePrice
         }).ToList()
     };
+
+    private void AddProduct(Product product)
+    {
+        var existing = Items.FirstOrDefault(i => i.ProductId == product.Id);
+        if (existing is null)
+        {
+            var line = new ReceiptLineItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Barcode = product.Barcode,
+                Quantity = 1,
+                PurchasePrice = product.PurchasePrice <= 0 ? product.SalePrice : product.PurchasePrice
+            };
+            line.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Total));
+            Items.Add(line);
+        }
+        else
+        {
+            existing.Quantity += 1;
+        }
+
+        OnPropertyChanged(nameof(Total));
+    }
 }
 
 public class ReceiptLineItem : ViewModelBase
@@ -157,6 +188,7 @@ public class ReceiptLineItem : ViewModelBase
 
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string Barcode { get; set; } = string.Empty;
 
     public decimal Quantity
     {

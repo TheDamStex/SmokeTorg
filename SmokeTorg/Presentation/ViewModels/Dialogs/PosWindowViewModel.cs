@@ -14,9 +14,13 @@ public class PosWindowViewModel(
     InventoryService inventoryService) : ViewModelBase, IDialogRequestClose
 {
     private string _searchText = string.Empty;
+    private string _barcodeInput = string.Empty;
+    private string _lastScannedBarcode = "-";
     private string _paymentType = "Нал";
     private decimal _received;
+    private bool _hasBarcodeError;
     private Product? _selectedProduct;
+    private CancellationTokenSource? _barcodeErrorCts;
 
     public ObservableCollection<Product> SearchResults { get; } = [];
     public ObservableCollection<PosLineItem> CheckItems { get; } = [];
@@ -26,6 +30,24 @@ public class PosWindowViewModel(
     {
         get => _searchText;
         set => SetProperty(ref _searchText, value);
+    }
+
+    public string BarcodeInput
+    {
+        get => _barcodeInput;
+        set => SetProperty(ref _barcodeInput, value);
+    }
+
+    public string LastScannedBarcode
+    {
+        get => _lastScannedBarcode;
+        set => SetProperty(ref _lastScannedBarcode, value);
+    }
+
+    public bool HasBarcodeError
+    {
+        get => _hasBarcodeError;
+        set => SetProperty(ref _hasBarcodeError, value);
     }
 
     public string PaymentType
@@ -68,32 +90,35 @@ public class PosWindowViewModel(
         }
     });
 
-    public RelayCommand AddItemCommand => new(p =>
+    public AsyncRelayCommand ScanBarcodeCommand => new(async _ =>
     {
-        if (p is not Product product)
+        var barcode = BarcodeInput.Trim();
+        if (string.IsNullOrWhiteSpace(barcode))
         {
             return;
         }
 
-        var existing = CheckItems.FirstOrDefault(x => x.ProductId == product.Id);
-        if (existing is null)
+        var product = await productService.FindByBarcode(barcode);
+        if (product is null)
         {
-            var line = new PosLineItem
-            {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                Quantity = 1,
-                Price = product.SalePrice
-            };
-            line.PropertyChanged += (_, _) => RaiseTotals();
-            CheckItems.Add(line);
-        }
-        else
-        {
-            existing.Quantity += 1;
+            LastScannedBarcode = barcode;
+            await ShowBarcodeErrorAsync();
+            MessageBox.Show("Товар не знайдено за штрихкодом", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
         }
 
-        RaiseTotals();
+        AddProductToCheck(product);
+        LastScannedBarcode = barcode;
+        BarcodeInput = string.Empty;
+        HasBarcodeError = false;
+    });
+
+    public RelayCommand AddItemCommand => new(p =>
+    {
+        if (p is Product product)
+        {
+            AddProductToCheck(product);
+        }
     });
 
     public RelayCommand IncreaseCommand => new(p =>
@@ -165,6 +190,7 @@ public class PosWindowViewModel(
             {
                 ProductId = x.ProductId,
                 ProductName = x.ProductName,
+                BarcodeDisplay = x.Barcode,
                 Quantity = x.Quantity,
                 Price = x.Price,
                 DiscountPercent = 0
@@ -182,10 +208,52 @@ public class PosWindowViewModel(
     public RelayCommand CancelCheckCommand => new(_ => ClearCheck());
     public RelayCommand CloseCommand => new(_ => RequestClose?.Invoke(this, false));
 
+    private void AddProductToCheck(Product product)
+    {
+        var existing = CheckItems.FirstOrDefault(x => x.ProductId == product.Id);
+        if (existing is null)
+        {
+            var line = new PosLineItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Barcode = product.Barcode,
+                Quantity = 1,
+                Price = product.SalePrice
+            };
+            line.PropertyChanged += (_, _) => RaiseTotals();
+            CheckItems.Add(line);
+        }
+        else
+        {
+            existing.Quantity += 1;
+        }
+
+        RaiseTotals();
+    }
+
+    private async Task ShowBarcodeErrorAsync()
+    {
+        _barcodeErrorCts?.Cancel();
+        _barcodeErrorCts = new CancellationTokenSource();
+
+        HasBarcodeError = true;
+        try
+        {
+            await Task.Delay(1500, _barcodeErrorCts.Token);
+            HasBarcodeError = false;
+        }
+        catch (TaskCanceledException)
+        {
+            // ignore
+        }
+    }
+
     private void ClearCheck()
     {
         CheckItems.Clear();
         Received = 0;
+        BarcodeInput = string.Empty;
         RaiseTotals();
     }
 
@@ -204,6 +272,7 @@ public class PosLineItem : ViewModelBase
 
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string Barcode { get; set; } = string.Empty;
 
     public decimal Quantity
     {

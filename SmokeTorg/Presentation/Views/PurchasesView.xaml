@@ -32,6 +32,7 @@
             <DataGrid ItemsSource="{Binding Current.Items}" AutoGenerateColumns="False" Height="250" Margin="0,8,0,0">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*"/>
+                    <DataGridTextColumn Header="Штрихкод" Binding="{Binding BarcodeDisplay}" Width="140"/>
                     <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="80"/>
                     <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="80"/>
                 </DataGrid.Columns>

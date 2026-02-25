@@ -22,7 +22,7 @@ public class PurchasesViewModel(PurchaseService purchaseService, ProductService 
     public RelayCommand AddLineCommand => new(p =>
     {
         if (p is Product pr)
-            Current.Items.Add(new PurchaseItem { ProductId = pr.Id, ProductName = pr.Name, Quantity = 1, Price = pr.PurchasePrice });
+            Current.Items.Add(new PurchaseItem { ProductId = pr.Id, ProductName = pr.Name, BarcodeDisplay = pr.Barcode, Quantity = 1, Price = pr.PurchasePrice });
         OnPropertyChanged(nameof(Current));
     });
 
@@ -36,5 +36,17 @@ public class PurchasesViewModel(PurchaseService purchaseService, ProductService 
 
         Products.Clear();
         foreach (var p in await productService.GetAllAsync()) Products.Add(p);
+
+        var barcodeMap = Products.ToDictionary(x => x.Id, x => x.Barcode);
+        foreach (var purchase in Purchases)
+        {
+            foreach (var item in purchase.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.BarcodeDisplay) && barcodeMap.TryGetValue(item.ProductId, out var barcode))
+                {
+                    item.BarcodeDisplay = barcode;
+                }
+            }
+        }
     }
 }
