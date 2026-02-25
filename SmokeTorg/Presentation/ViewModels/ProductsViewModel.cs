@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using SmokeTorg.Application.Services;
 using SmokeTorg.Common.Base;
 using SmokeTorg.Common.Commands;
@@ -19,16 +20,59 @@ public class ProductsViewModel(ProductService productService) : ViewModelBase
 
     public AsyncRelayCommand RefreshCommand => new(async _ => await LoadAsync());
     public AsyncRelayCommand SearchCommand => new(async _ => await SearchAsync());
-    public RelayCommand AddCommand => new(_ => Editable = new Product());
-    public RelayCommand EditCommand => new(_ => { if (Selected is not null) Editable = new Product
+    public RelayCommand AddCommand => new(_ =>
     {
-        Id = Selected.Id, Name = Selected.Name, Sku = Selected.Sku, Barcode = Selected.Barcode,
-        CategoryId = Selected.CategoryId, Unit = Selected.Unit, PurchasePrice = Selected.PurchasePrice,
-        SalePrice = Selected.SalePrice, TaxGroup = Selected.TaxGroup, IsActive = Selected.IsActive,
-        MinStock = Selected.MinStock, Version = Selected.Version
-    }; OnPropertyChanged(nameof(Editable)); });
-    public AsyncRelayCommand SaveCommand => new(async _ => { await productService.SaveAsync(Editable); await LoadAsync(); });
-    public AsyncRelayCommand DeleteCommand => new(async _ => { if (Selected is not null) { await productService.DeleteAsync(Selected.Id); await LoadAsync(); } });
+        Editable = new Product();
+        OnPropertyChanged(nameof(Editable));
+    });
+
+    public RelayCommand EditCommand => new(_ =>
+    {
+        if (Selected is null)
+        {
+            return;
+        }
+
+        Editable = new Product
+        {
+            Id = Selected.Id,
+            Name = Selected.Name,
+            Sku = Selected.Sku,
+            Barcode = Selected.Barcode,
+            CategoryId = Selected.CategoryId,
+            Unit = Selected.Unit,
+            PurchasePrice = Selected.PurchasePrice,
+            SalePrice = Selected.SalePrice,
+            TaxGroup = Selected.TaxGroup,
+            IsActive = Selected.IsActive,
+            MinStock = Selected.MinStock,
+            Version = Selected.Version
+        };
+
+        OnPropertyChanged(nameof(Editable));
+    });
+
+    public AsyncRelayCommand SaveCommand => new(async _ =>
+    {
+        try
+        {
+            await productService.SaveAsync(Editable);
+            await LoadAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(ex.Message, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    });
+
+    public AsyncRelayCommand DeleteCommand => new(async _ =>
+    {
+        if (Selected is not null)
+        {
+            await productService.DeleteAsync(Selected.Id);
+            await LoadAsync();
+        }
+    });
 
     public async Task LoadAsync()
     {

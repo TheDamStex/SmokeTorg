@@ -8,7 +8,7 @@
         ResizeMode="CanResize"
         UseLayoutRounding="True"
         Background="{StaticResource WindowBackgroundBrush}"
-        FocusManager.FocusedElement="{Binding ElementName=SearchBox}">
+        FocusManager.FocusedElement="{Binding ElementName=BarcodeBox}">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -27,33 +27,76 @@
                 Margin="0,16,0,16"
                 Padding="20,16">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2.8*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="260"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="SearchBox"
-                         Style="{StaticResource AppTextBoxStyle}"
+
+                <TextBox x:Name="BarcodeBox"
+                         Grid.Column="0"
                          Height="38"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Grid.Column="1"
-                        Margin="10,0,0,0"
-                        Content="Пошук"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding SearchCommand}"/>
-                <ComboBox Grid.Column="2"
-                          Margin="10,0,0,0"
-                          Height="38"
-                          ItemsSource="{Binding SearchResults}"
-                          DisplayMemberPath="Name"
-                          SelectedItem="{Binding SelectedProduct}"/>
-                <Button Grid.Column="3"
-                        Margin="10,0,0,0"
-                        Content="Додати"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="{Binding SelectedProduct}"/>
+                         Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Штрихкод">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource AppTextBoxStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasBarcodeError}" Value="True">
+                                    <Setter Property="BorderBrush" Value="#D92D20"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding ScanBarcodeCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <TextBlock Grid.Column="1"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           Text="Останній сканований:"/>
+                <TextBlock Grid.Column="2"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Text="{Binding LastScannedBarcode}"/>
+
+                <Grid Grid.Row="1" Grid.ColumnSpan="4" Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.8*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="260"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="SearchBox"
+                             Style="{StaticResource AppTextBoxStyle}"
+                             Height="38"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Column="1"
+                            Margin="10,0,0,0"
+                            Content="Пошук"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding SearchCommand}"/>
+                    <ComboBox Grid.Column="2"
+                              Margin="10,0,0,0"
+                              Height="38"
+                              ItemsSource="{Binding SearchResults}"
+                              DisplayMemberPath="Name"
+                              SelectedItem="{Binding SelectedProduct}"/>
+                    <Button Grid.Column="3"
+                            Margin="10,0,0,0"
+                            Content="Додати"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding AddItemCommand}"
+                            CommandParameter="{Binding SelectedProduct}"/>
+                </Grid>
             </Grid>
         </Border>
 
@@ -64,6 +107,7 @@
                       BorderThickness="0">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
                     <DataGridTemplateColumn Header="К-сть" Width="200">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

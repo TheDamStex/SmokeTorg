@@ -26,6 +26,10 @@
                 Margin="0,16,0,16"
                 Padding="20">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2.3*"/>
                     <ColumnDefinition Width="2*"/>
@@ -67,6 +71,32 @@
                             Style="{StaticResource SecondaryButtonStyle}"
                             Command="{Binding AddSupplierCommand}"/>
                 </StackPanel>
+
+                <Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Style="{StaticResource AppTextBoxStyle}"
+                             Height="38"
+                             Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Штрихкод">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding AddByBarcodeCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Content="Додати за штрихкодом"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding AddByBarcodeCommand}"/>
+                    <TextBlock Grid.Column="2"
+                               Margin="12,0,0,0"
+                               VerticalAlignment="Center"
+                               Foreground="#666"
+                               Text="Пошук за назвою залишається як вторинний сценарій."/>
+                </Grid>
             </Grid>
         </Border>
 
@@ -81,6 +111,7 @@
                           BorderThickness="0">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
                         <DataGridTextColumn Header="К-сть" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
                         <DataGridTextColumn Header="Ціна закупівлі" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged}" Width="170"/>
                         <DataGridTextColumn Header="Сума" Binding="{Binding Sum}" Width="140" IsReadOnly="True"/>

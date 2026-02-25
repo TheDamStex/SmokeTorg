@@ -6,29 +6,41 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <WrapPanel>
             <TextBox Width="240" Text="{Binding SearchText}" Margin="0,0,8,0"/>
-            <Button Content="Поиск" Command="{Binding SearchCommand}" Margin="0,0,8,0"/>
-            <Button Content="Обновить" Command="{Binding RefreshCommand}"/>
+            <Button Content="Пошук" Command="{Binding SearchCommand}" Margin="0,0,8,0"/>
+            <Button Content="Оновити" Command="{Binding RefreshCommand}"/>
         </WrapPanel>
 
         <DataGrid Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
                 <DataGridTextColumn Header="Артикул" Binding="{Binding Sku}" Width="120"/>
-                <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="120"/>
-                <DataGridTextColumn Header="Цена зак." Binding="{Binding PurchasePrice}" Width="100"/>
-                <DataGridTextColumn Header="Цена прод." Binding="{Binding SalePrice}" Width="100"/>
+                <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="140"/>
+                <DataGridTextColumn Header="Ціна зак." Binding="{Binding PurchasePrice}" Width="100"/>
+                <DataGridTextColumn Header="Ціна прод." Binding="{Binding SalePrice}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
-            <Button Content="Новый" Command="{Binding AddCommand}" Margin="0,0,8,0"/>
-            <Button Content="Изменить" Command="{Binding EditCommand}" Margin="0,0,8,0"/>
-            <Button Content="Удалить" Command="{Binding DeleteCommand}" Margin="0,0,8,0"/>
-            <Button Content="Сохранить" Command="{Binding SaveCommand}"/>
+            <Button Content="Новий" Command="{Binding AddCommand}" Margin="0,0,8,0"/>
+            <Button Content="Змінити" Command="{Binding EditCommand}" Margin="0,0,8,0"/>
+            <Button Content="Видалити" Command="{Binding DeleteCommand}" Margin="0,0,8,0"/>
+            <Button Content="Зберегти" Command="{Binding SaveCommand}"/>
         </StackPanel>
+
+        <Grid Grid.Row="3" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Margin="0,0,8,0" Text="{Binding Editable.Name, UpdateSourceTrigger=PropertyChanged}" ToolTip="Назва"/>
+            <TextBox Grid.Column="1" Margin="0,0,8,0" Text="{Binding Editable.Sku, UpdateSourceTrigger=PropertyChanged}" ToolTip="Артикул"/>
+            <TextBox Grid.Column="2" Text="{Binding Editable.Barcode, UpdateSourceTrigger=PropertyChanged}" ToolTip="Штрихкод"/>
+        </Grid>
     </Grid>
 </UserControl>

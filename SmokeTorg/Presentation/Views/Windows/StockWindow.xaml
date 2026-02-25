@@ -45,7 +45,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBox Style="{StaticResource AppTextBoxStyle}"
                          Height="38"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Пошук за назвою або штрихкодом"/>
                 <CheckBox Grid.Column="1"
                           Margin="14,0,0,0"
                           VerticalAlignment="Center"
@@ -71,6 +71,7 @@
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*"/>
+                    <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="170"/>
                     <DataGridTextColumn Header="Категорія" Binding="{Binding Category}" Width="220"/>
                     <DataGridTextColumn Header="Залишок" Binding="{Binding Quantity}" Width="120"/>
                     <DataGridTextColumn Header="Мін.залишок" Binding="{Binding MinQuantity}" Width="130"/>

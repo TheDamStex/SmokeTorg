@@ -14,6 +14,7 @@ public interface IRepository<T> where T : BaseEntity
 public interface IProductRepository : IRepository<Product>
 {
     Task<List<Product>> SearchAsync(string text);
+    Task<Product?> GetByBarcode(string barcode);
 }
 
 public interface ICategoryRepository : IRepository<Category>;

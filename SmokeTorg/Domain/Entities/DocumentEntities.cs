@@ -18,6 +18,7 @@ public class SaleItem
 {
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string BarcodeDisplay { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal Price { get; set; }
     public decimal DiscountPercent { get; set; }
@@ -36,6 +37,7 @@ public class PurchaseItem
 {
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string BarcodeDisplay { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal Price { get; set; }
 }
@@ -52,6 +54,7 @@ public class StockMovement : BaseEntity
 public class StockItem : BaseEntity
 {
     public Guid ProductId { get; set; }
+    public string BarcodeDisplay { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
 }
 
