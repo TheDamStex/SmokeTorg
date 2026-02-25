@@ -8,7 +8,7 @@
 
         <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7F8FA"/>
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF8A00"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF7A00"/>
         <SolidColorBrush x:Key="AccentDarkBrush" Color="#FF6A00"/>
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F2937"/>
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="#667085"/>
@@ -40,10 +40,12 @@
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="BorderBrush" Value="#E6E6E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.1" Color="#000000"/>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.1" Color="#000000"/>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -218,7 +220,7 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#F28C28"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#FF8F1F"/></Trigger>
                             <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#E06E00"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -229,7 +231,7 @@
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#344054"/>
-            <Setter Property="BorderBrush" Value="#D0D5DD"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="MinHeight" Value="34"/>
@@ -241,7 +243,7 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#F9FAFB"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#F5F5F5"/></Trigger>
                             <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#F2F4F7"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -260,21 +262,32 @@
 
         <Style x:Key="AppDataGridStyle" TargetType="DataGrid">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#EAECF0"/>
+            <Setter Property="BorderBrush" Value="#E6E6E6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="RowBackground" Value="White"/>
             <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
             <Setter Property="CanUserAddRows" Value="False"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#F2F4F7"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#EFEFEF"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
+            <Setter Property="RowHeight" Value="44"/>
             <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#FFF8F2"/>
+                        <Setter Property="Background" Value="#F1F1F1"/>
                         <Setter Property="Foreground" Value="#1F2937"/>
                         <Setter Property="FontWeight" Value="SemiBold"/>
                         <Setter Property="Padding" Value="10,8"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="Padding" Value="10,0"/>
                     </Style>
                 </Setter.Value>
             </Setter>
