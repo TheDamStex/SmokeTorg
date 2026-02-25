@@ -1,9 +1,11 @@
 <Application x:Class="SmokeTorg.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:SmokeTorg.Presentation.ViewModels">
+             xmlns:vm="clr-namespace:SmokeTorg.Presentation.ViewModels"
+             xmlns:converters="clr-namespace:SmokeTorg.Common.Converters">
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <vm:ViewModelLocator x:Key="Locator"/>
 
         <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7F8FA"/>
@@ -251,6 +253,20 @@
             </Setter>
         </Style>
 
+
+        <ControlTemplate x:Key="ValidationErrorTemplate">
+            <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Bottom"
+                           Margin="2,4,0,0"
+                           Foreground="#D92D20"
+                           FontSize="12"
+                           Text="{Binding [0].ErrorContent}"/>
+                <Border BorderBrush="#D92D20" BorderThickness="1.5" CornerRadius="4">
+                    <AdornedElementPlaceholder/>
+                </Border>
+            </DockPanel>
+        </ControlTemplate>
+
         <Style x:Key="AppTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,7"/>
             <Setter Property="BorderBrush" Value="#D0D5DD"/>
@@ -258,6 +274,18 @@
             <Setter Property="Background" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ValidationErrorTemplate}"/>
+        </Style>
+
+
+        <Style x:Key="AppComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="BorderBrush" Value="#D0D5DD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ValidationErrorTemplate}"/>
         </Style>
 
         <Style x:Key="AppDataGridStyle" TargetType="DataGrid">

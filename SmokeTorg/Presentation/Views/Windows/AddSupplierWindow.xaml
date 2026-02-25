@@ -23,16 +23,17 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
                 <TextBox Grid.Row="1" Margin="0,10,0,0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBox Grid.Row="2" Margin="0,10,0,0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBox Grid.Row="3" Margin="0,10,0,0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="2" Margin="0,10,0,0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                <TextBox Grid.Row="3" Margin="0,10,0,0" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
             </Grid>
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,14,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
             <Button Content="Скасувати" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CancelCommand}"/>
-            <Button Content="Зберегти" Margin="10,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveCommand}"/>
+            <Button Content="Зберегти" Margin="10,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding HasErrors, Converter={StaticResource InverseBoolConverter}}"/>
         </StackPanel>
     </Grid>
 </Window>

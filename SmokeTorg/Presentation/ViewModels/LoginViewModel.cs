@@ -1,11 +1,10 @@
-using System.ComponentModel;
 using SmokeTorg.Application.Services;
 using SmokeTorg.Common.Base;
 using SmokeTorg.Domain.Entities;
 
 namespace SmokeTorg.Presentation.ViewModels;
 
-public class LoginViewModel(AuthService authService) : ViewModelBase, IDataErrorInfo
+public class LoginViewModel(AuthService authService) : ViewModelBase
 {
     private string _username = "admin";
     private string _password = "admin123";
@@ -17,15 +16,42 @@ public class LoginViewModel(AuthService authService) : ViewModelBase, IDataError
 
     public async Task<bool> LoginAsync()
     {
+        ValidateAll();
+        if (HasErrors)
+        {
+            return false;
+        }
+
         CurrentUser = await authService.LoginAsync(Username, Password);
-        return CurrentUser is not null;
+        if (CurrentUser is null)
+        {
+            AddError(nameof(Username), "Невірний логін або пароль");
+            AddError(nameof(Password), "Невірний логін або пароль");
+            return false;
+        }
+
+        ClearErrors(nameof(Username));
+        ClearErrors(nameof(Password));
+        return true;
     }
 
-    public string Error => string.Empty;
-    public string this[string columnName] => columnName switch
+    protected override void ValidateProperty(string propertyName)
     {
-        nameof(Username) when string.IsNullOrWhiteSpace(Username) => "Введите логин",
-        nameof(Password) when string.IsNullOrWhiteSpace(Password) => "Введите пароль",
-        _ => string.Empty
-    };
+        if (propertyName is not (nameof(Username) or nameof(Password)))
+        {
+            return;
+        }
+
+        ClearErrors(propertyName);
+
+        if (propertyName == nameof(Username) && string.IsNullOrWhiteSpace(Username))
+        {
+            AddError(nameof(Username), "Поле обов’язкове");
+        }
+
+        if (propertyName == nameof(Password) && string.IsNullOrWhiteSpace(Password))
+        {
+            AddError(nameof(Password), "Поле обов’язкове");
+        }
+    }
 }
