@@ -1,0 +1,173 @@
+<Window x:Class="SmokeTorg.Presentation.Views.Windows.ClientCardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Клієнт у Торговельна мережа"
+        Width="1080"
+        Height="760"
+        MinWidth="980"
+        MinHeight="700"
+        WindowStartupLocation="CenterOwner"
+        UseLayoutRounding="True"
+        Background="{StaticResource WindowBackgroundBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=CardCodeBox}">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource CardStyle}" Padding="12" Margin="0,0,0,10">
+            <TextBlock Text="Клієнт у Торговельна мережа" FontSize="20" FontWeight="SemiBold"/>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="10">
+            <TabControl>
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Загальні"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Найменування клієнта *"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding CustomerName, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                <TextBlock Text="Прізвище" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Ім'я" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="По батькові" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Телефон (мобільний)" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                <TextBlock Text="Електронна адреса" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                            </StackPanel>
+
+                            <Border Grid.Column="1" Background="#D0D5DD" Width="1"/>
+
+                            <StackPanel Grid.Column="2">
+                                <Border Background="#ECEFF3" BorderBrush="#D0D5DD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+                                    <TextBlock Text="Параметри для знижки" FontWeight="SemiBold"/>
+                                </Border>
+                                <TextBlock Text="Код (№ картки) *"/>
+                                <TextBox x:Name="CardCodeBox" Style="{StaticResource AppTextBoxStyle}" Text="{Binding DiscountCardNumber, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Enter" Command="{Binding SaveCommand}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
+
+                                <TextBlock Text="Регіон" Margin="0,8,0,0"/>
+                                <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding Regions}" SelectedItem="{Binding SelectedRegion}"/>
+                                <TextBlock Text="Спосіб нарахування знижки" Margin="0,8,0,0"/>
+                                <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding DiscountTypes}" SelectedItem="{Binding SelectedDiscountType}"/>
+                                <TextBlock Text="Тип дисконтної картки" Margin="0,8,0,0"/>
+                                <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding CardTypes}" SelectedItem="{Binding SelectedCardType}"/>
+                                <TextBlock Text="Початкова сума для знижки" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding InitialDiscountAmount, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                <TextBlock Text="% знижки" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding DiscountPercent, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                <TextBlock Text="Початкова сума бонусу" Margin="0,8,0,0"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding BonusBalance, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <CheckBox Content="VIP-клієнт" IsChecked="{Binding IsVip}" Margin="0,0,16,0"/>
+                                    <CheckBox Content="Блок" IsChecked="{Binding IsBlocked}"/>
+                                </StackPanel>
+                                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#667085" FontSize="12"
+                                           Text="Підказка: при оплаті чека система автоматично застосовує налаштований тип знижки або бонусів для цієї картки."/>
+                            </StackPanel>
+
+                            <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="#D0D5DD" BorderThickness="0,1,0,0" Margin="0,12"/>
+
+                            <StackPanel Grid.Row="2" Grid.ColumnSpan="3">
+                                <Border Background="#ECEFF3" BorderBrush="#D0D5DD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+                                    <TextBlock Text="Адреса та додаткова інформація" FontWeight="SemiBold"/>
+                                </Border>
+                                <UniformGrid Columns="4" Margin="0,0,0,8">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Країна"/>
+                                        <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding Countries}" SelectedItem="{Binding SelectedCountry}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Місто"/>
+                                        <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding Cities}" SelectedItem="{Binding SelectedCity}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Область"/>
+                                        <ComboBox Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding Areas}" SelectedItem="{Binding SelectedArea}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Індекс"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <TextBlock Text="Додаткова інформація"/>
+                                <TextBox Style="{StaticResource AppTextBoxStyle}" Height="72" AcceptsReturn="True" TextWrapping="Wrap"
+                                         Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Склад сім'ї"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid Margin="8">
+                        <DataGrid Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding FamilyMembers}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Родинний зв'язок" Binding="{Binding РодиннийЗв'язок}" Width="*"/>
+                                <DataGridTextColumn Header="ПІБ" Binding="{Binding ПІБ}" Width="2*"/>
+                                <DataGridTextColumn Header="Телефон" Binding="{Binding Телефон}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Немає даних про склад сім'ї" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#667085"/>
+                    </Grid>
+                </TabItem>
+
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                            <TextBlock Text="Придбання"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid Margin="8">
+                        <DataGrid Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding Purchases}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Дата" Binding="{Binding Дата, StringFormat={}{0:dd.MM.yyyy}}" Width="120"/>
+                                <DataGridTextColumn Header="Документ" Binding="{Binding Документ}" Width="*"/>
+                                <DataGridTextColumn Header="Сума" Binding="{Binding Сума}" Width="140"/>
+                                <DataGridTextColumn Header="Нараховано бонусів" Binding="{Binding НарахованоБонусів}" Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Історія придбань порожня" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#667085"/>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Видалити" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}"/>
+            <Button Content="Скасувати" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Command="{Binding CancelCommand}"/>
+            <Button Content="Зберегти" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveCommand}" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
