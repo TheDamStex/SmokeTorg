@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using MySqlConnector;
 using SmokeTorg.Application.Interfaces;
+using System.IO;
 
 namespace SmokeTorg.Infrastructure.Services;
 
