@@ -5,6 +5,7 @@ using SmokeTorg.Domain.Enums;
 using SmokeTorg.Presentation.Models;
 using SmokeTorg.Presentation.Services;
 using SmokeTorg.Presentation.ViewModels.Dialogs;
+using SmokeTorg.Presentation.Views.Windows;
 
 namespace SmokeTorg.Presentation.ViewModels;
 
@@ -19,6 +20,7 @@ public class MainViewModel : ViewModelBase
     private readonly GoodsReceiptViewModel _goodsReceiptViewModel;
     private readonly PosWindowViewModel _posWindowViewModel;
     private readonly StockViewModel _stockViewModel;
+    private readonly IServiceProvider _serviceProvider;
     private object? _currentViewModel;
     private bool _isHomeView = true;
 
@@ -31,7 +33,8 @@ public class MainViewModel : ViewModelBase
         IDialogService dialogService,
         GoodsReceiptViewModel goodsReceiptViewModel,
         PosWindowViewModel posWindowViewModel,
-        StockViewModel stockViewModel)
+        StockViewModel stockViewModel,
+        IServiceProvider serviceProvider)
     {
         _loginVm = loginVm;
         _posVm = posVm;
@@ -42,6 +45,7 @@ public class MainViewModel : ViewModelBase
         _goodsReceiptViewModel = goodsReceiptViewModel;
         _posWindowViewModel = posWindowViewModel;
         _stockViewModel = stockViewModel;
+        _serviceProvider = serviceProvider;
 
         AppTitle = "SmokeTorg";
         StoreName = "Магазин: Central Store";
@@ -76,7 +80,8 @@ public class MainViewModel : ViewModelBase
         OpenProductsCommand = new RelayCommand(_ => OpenModule(_productsVm));
         OpenPurchasesCommand = new RelayCommand(_ => OpenModule(_purchasesVm));
         OpenReportsCommand = new RelayCommand(_ => OpenPlaceholder("Отчеты"));
-        OpenSettingsCommand = new RelayCommand(_ => OpenPlaceholder("Настройки"));
+        OpenSettingsCommand = new RelayCommand(_ => OpenDbSettings());
+        OpenUserManagementCommand = new RelayCommand(_ => OpenUserManagement());
         OpenPlaceholderCommand = new RelayCommand(p => OpenPlaceholder(p?.ToString() ?? "Модуль"));
         OpenHomeCommand = new RelayCommand(_ => OpenHome());
 
@@ -109,9 +114,9 @@ public class MainViewModel : ViewModelBase
     public string ModeInfo { get; }
     public ObservableCollection<NewsItem> News { get; }
 
-    public string CurrentUserInfo => _loginVm.CurrentUser is null ? "Гость" : $"{_loginVm.CurrentUser.Username} ({_loginVm.CurrentUser.Role})";
-    public bool IsAdmin => _loginVm.CurrentUser?.Role == UserRole.Admin;
-    public bool CanManageCatalog => _loginVm.CurrentUser?.Role is UserRole.Admin or UserRole.Manager;
+    public string CurrentUserInfo => _loginVm.CurrentSession is null ? "Гість" : $"{_loginVm.CurrentSession.Username} ({_loginVm.CurrentSession.Role})";
+    public bool IsAdmin => _loginVm.CurrentSession?.Role == UserRole.Admin;
+    public bool CanManageCatalog => _loginVm.CurrentSession?.Role is UserRole.Admin or UserRole.Manager;
 
     public RelayCommand NavigateCommand { get; }
     public AsyncRelayCommand LoginCommand { get; }
@@ -121,6 +126,7 @@ public class MainViewModel : ViewModelBase
     public RelayCommand OpenReportsCommand { get; }
     public RelayCommand OpenSettingsCommand { get; }
     public RelayCommand OpenPlaceholderCommand { get; }
+    public RelayCommand OpenUserManagementCommand { get; }
     public RelayCommand OpenHomeCommand { get; }
     public AsyncRelayCommand OpenGoodsReceiptCommand { get; }
     public RelayCommand OpenPosCommand { get; }
@@ -166,15 +172,41 @@ public class MainViewModel : ViewModelBase
         IsHomeView = true;
     }
 
+
+    private void OpenDbSettings()
+    {
+        if (!IsAdmin)
+        {
+            System.Windows.MessageBox.Show("Недостатньо прав доступу");
+            return;
+        }
+
+        var window = (DbSettingsWindow)_serviceProvider.GetService(typeof(DbSettingsWindow))!;
+        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.ShowDialog();
+    }
+
+    private void OpenUserManagement()
+    {
+        if (!IsAdmin)
+        {
+            System.Windows.MessageBox.Show("Недостатньо прав доступу");
+            return;
+        }
+
+        var window = (UserManagementWindow)_serviceProvider.GetService(typeof(UserManagementWindow))!;
+        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.ShowDialog();
+    }
     private async Task DoLoginAsync()
     {
         await _loginVm.LoginAsync();
-        UserName = _loginVm.CurrentUser?.Username ?? "owner";
-        Role = _loginVm.CurrentUser?.Role switch
+        UserName = _loginVm.CurrentSession?.Username ?? "owner";
+        Role = _loginVm.CurrentSession?.Role switch
         {
             UserRole.Admin => "Администратор",
             UserRole.Manager => "Менеджер",
-            UserRole.Cashier => "Кассир",
+            UserRole.Cashier => "Касир",
             _ => "Владелец"
         };
 

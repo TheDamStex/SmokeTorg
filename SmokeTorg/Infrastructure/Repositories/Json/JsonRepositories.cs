@@ -37,6 +37,18 @@ public class JsonUserRepository(IStorageProvider storage) : JsonRepositoryBase<U
 {
     public async Task<User?> GetByUsernameAsync(string username)
         => (await GetAllAsync()).FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+
+    public async Task<bool> UsernameExistsAsync(string username)
+        => (await GetByUsernameAsync(username)) is not null;
+
+    public async Task<List<User>> FilterAsync(string? search, Domain.Enums.UserRole? role)
+    {
+        var all = await GetAllAsync();
+        return all
+            .Where(u => role is null || u.Role == role)
+            .Where(u => string.IsNullOrWhiteSpace(search) || u.Username.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
 }
 
 public class JsonStockRepository(IStorageProvider storage) : IStockRepository

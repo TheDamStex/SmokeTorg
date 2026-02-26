@@ -23,6 +23,8 @@ public interface ICustomerRepository : IRepository<Customer>;
 public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetByUsernameAsync(string username);
+    Task<bool> UsernameExistsAsync(string username);
+    Task<List<User>> FilterAsync(string? search, Domain.Enums.UserRole? role);
 }
 
 public interface ISaleRepository : IRepository<Sale>;

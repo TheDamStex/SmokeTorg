@@ -2,7 +2,8 @@ namespace SmokeTorg.Domain.Enums;
 
 public enum UserRole
 {
-    Cashier,
+    Seller,
     Manager,
-    Admin
+    Admin,
+    Cashier = Seller
 }

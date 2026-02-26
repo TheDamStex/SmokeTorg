@@ -3,19 +3,20 @@ using Microsoft.Extensions.DependencyInjection;
 using SmokeTorg.Application.Interfaces;
 using SmokeTorg.Application.Services;
 using SmokeTorg.Common.Logging;
-using SmokeTorg.Infrastructure.Factories;
 using SmokeTorg.Infrastructure.Repositories.Json;
 using SmokeTorg.Infrastructure.Repositories.Sql;
 using SmokeTorg.Infrastructure.Seed;
+using SmokeTorg.Infrastructure.Services;
 using SmokeTorg.Infrastructure.Storage;
 using SmokeTorg.Presentation.Services;
 using SmokeTorg.Presentation.ViewModels;
 using SmokeTorg.Presentation.ViewModels.Dialogs;
+using SmokeTorg.Presentation.ViewModels.Windows;
 using SmokeTorg.Presentation.Views.Windows;
 
 namespace SmokeTorg;
 
-public partial class App : System.Windows.Application
+public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
@@ -25,10 +26,35 @@ public partial class App : System.Windows.Application
         ConfigureServices(collection);
         Services = collection.BuildServiceProvider();
 
+        var dbSettingsService = Services.GetRequiredService<IDbSettingsService>();
+        var settings = await dbSettingsService.LoadAsync();
+
+        if (!settings.IsConfigured)
+        {
+            var setupWindow = Services.GetRequiredService<SetupWizardWindow>();
+            var setupResult = setupWindow.ShowDialog();
+            if (setupResult != true)
+            {
+                Shutdown();
+                return;
+            }
+
+            settings = await dbSettingsService.LoadAsync();
+        }
+
+        var loginWindow = Services.GetRequiredService<LoginWindow>();
+        var loginResult = loginWindow.ShowDialog();
+        if (loginResult != true)
+        {
+            Shutdown();
+            return;
+        }
+
         var seeder = Services.GetRequiredService<DataSeeder>();
         await seeder.EnsureSeedAsync();
 
         var window = Services.GetRequiredService<MainWindow>();
+        MainWindow = window;
         window.Show();
         base.OnStartup(e);
     }
@@ -36,13 +62,15 @@ public partial class App : System.Windows.Application
     private static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<ILogger, SimpleLogger>();
-        services.AddSingleton<IStorageProviderFactory, StorageProviderFactory>();
-        services.AddSingleton<IStorageProvider>(sp =>
-            sp.GetRequiredService<IStorageProviderFactory>().CreateProvider("Json"));
+        services.AddSingleton<IStorageProvider, JsonStorageProvider>();
+        services.AddSingleton<IDbSettingsService, DbSettingsService>();
+        services.AddSingleton<IDbInitializer, MySqlDbInitializer>();
+        services.AddSingleton<IMySqlConnectionFactory, MySqlConnectionFactory>();
 
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IProductRepository, JsonProductRepository>();
         services.AddSingleton<ICategoryRepository, JsonCategoryRepository>();
-        services.AddSingleton<IUserRepository, JsonUserRepository>();
+        services.AddSingleton<IUserRepository, MySqlUserRepository>();
         services.AddSingleton<IPurchaseRepository, JsonPurchaseRepository>();
         services.AddSingleton<ISaleRepository, JsonSaleRepository>();
         services.AddSingleton<IStockRepository, JsonStockRepository>();
@@ -51,6 +79,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
 
         services.AddSingleton<AuthService>();
+        services.AddSingleton<IUserService, UserService>();
         services.AddSingleton<ProductService>();
         services.AddSingleton<SalesService>();
         services.AddSingleton<PurchaseService>();
@@ -68,6 +97,9 @@ public partial class App : System.Windows.Application
         services.AddSingleton<PosViewModel>();
         services.AddSingleton<PurchasesViewModel>();
         services.AddSingleton<PlaceholderViewModel>();
+        services.AddSingleton<SetupWizardViewModel>();
+        services.AddSingleton<UserManagementViewModel>();
+        services.AddSingleton<DbSettingsViewModel>();
 
         services.AddSingleton<GoodsReceiptViewModel>();
         services.AddSingleton<PosWindowViewModel>();
@@ -81,9 +113,11 @@ public partial class App : System.Windows.Application
         services.AddTransient<DiscountCardsListWindow>();
         services.AddTransient<StockWindow>();
         services.AddTransient<ClientCardWindow>();
+        services.AddTransient<SetupWizardWindow>();
+        services.AddTransient<LoginWindow>();
+        services.AddTransient<UserManagementWindow>();
+        services.AddTransient<DbSettingsWindow>();
 
         services.AddSingleton<MainWindow>();
-
-        _ = typeof(SqlProductRepository);
     }
 }

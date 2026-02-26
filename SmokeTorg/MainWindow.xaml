@@ -108,7 +108,13 @@
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-                            <TextBlock Text="Настройки" FontWeight="SemiBold"/>
+                            <TextBlock Text="Налаштування БД" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenUserManagementCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                            <TextBlock Text="Користувачі" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Помощь">
@@ -136,7 +142,7 @@
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" ToolTip="Отчёты">
                         <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
-                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenSettingsCommand}" ToolTip="Настройки">
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenSettingsCommand}" ToolTip="Налаштування БД">
                         <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
                 </StackPanel>
