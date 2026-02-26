@@ -133,9 +133,9 @@
                     <Grid Margin="8">
                         <DataGrid Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding FamilyMembers}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Родинний зв'язок" Binding="{Binding Path='РодиннийЗв''язок'}" Width="*"/>
-                                <DataGridTextColumn Header="ПІБ" Binding="{Binding ПІБ}" Width="2*"/>
-                                <DataGridTextColumn Header="Телефон" Binding="{Binding Телефон}" Width="*"/>
+                                <DataGridTextColumn Header="Родинний зв'язок" Binding="{Binding Relationship}" Width="*"/>
+                                <DataGridTextColumn Header="ПІБ" Binding="{Binding FullName}" Width="2*"/>
+                                <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock Text="Немає даних про склад сім'ї" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#667085"/>
@@ -152,10 +152,10 @@
                     <Grid Margin="8">
                         <DataGrid Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding Purchases}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Дата" Binding="{Binding Дата, StringFormat={}{0:dd.MM.yyyy}}" Width="120"/>
-                                <DataGridTextColumn Header="Документ" Binding="{Binding Документ}" Width="*"/>
-                                <DataGridTextColumn Header="Сума" Binding="{Binding Сума}" Width="140"/>
-                                <DataGridTextColumn Header="Нараховано бонусів" Binding="{Binding НарахованоБонусів}" Width="160"/>
+                                <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat={}{0:dd.MM.yyyy}}" Width="120"/>
+                                <DataGridTextColumn Header="Документ" Binding="{Binding Document}" Width="*"/>
+                                <DataGridTextColumn Header="Сума" Binding="{Binding Amount}" Width="140"/>
+                                <DataGridTextColumn Header="Нараховано бонусів" Binding="{Binding BonusAccrued}" Width="160"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock Text="Історія придбань порожня" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#667085"/>
