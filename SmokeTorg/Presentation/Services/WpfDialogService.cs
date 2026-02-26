@@ -11,6 +11,7 @@ public class WpfDialogService(IServiceProvider serviceProvider) : IDialogService
     {
         [typeof(GoodsReceiptViewModel)] = typeof(GoodsReceiptWindow),
         [typeof(PosWindowViewModel)] = typeof(PosWindow),
+        [typeof(DiscountCardsListViewModel)] = typeof(DiscountCardsListWindow),
         [typeof(StockViewModel)] = typeof(StockWindow),
         [typeof(SupplierCreateViewModel)] = typeof(SupplierCreateWindow),
         [typeof(ClientCardViewModel)] = typeof(ClientCardWindow)
@@ -25,7 +26,10 @@ public class WpfDialogService(IServiceProvider serviceProvider) : IDialogService
 
         var window = (Window)serviceProvider.GetRequiredService(windowType);
         window.DataContext = vm;
-        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.Owner = System.Windows.Application.Current.Windows
+            .OfType<Window>()
+            .FirstOrDefault(w => w.IsActive)
+            ?? System.Windows.Application.Current.MainWindow;
 
         if (vm is IDialogRequestClose closable)
         {

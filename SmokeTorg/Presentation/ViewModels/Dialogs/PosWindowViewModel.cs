@@ -27,20 +27,21 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
     private string _customerInfo = "Клієнт: не вибрано";
     private string _cardInfo = "Картка: -";
     private readonly IDialogService _dialogService;
-    private readonly ClientCardViewModel _clientCardViewModel;
+    private readonly DiscountCardsListViewModel _discountCardsListViewModel;
+    private Customer? _selectedDiscountCard;
 
     public PosWindowViewModel(
         ProductService productService,
         SalesService salesService,
         InventoryService inventoryService,
         IDialogService dialogService,
-        ClientCardViewModel clientCardViewModel)
+        DiscountCardsListViewModel discountCardsListViewModel)
     {
         _productService = productService;
         _salesService = salesService;
         _inventoryService = inventoryService;
         _dialogService = dialogService;
-        _clientCardViewModel = clientCardViewModel;
+        _discountCardsListViewModel = discountCardsListViewModel;
 
         SearchCommand = new AsyncRelayCommand(async _ => await SearchAsync());
         ScanBarcodeCommand = new AsyncRelayCommand(async _ => await ScanBarcodeAsync());
@@ -52,7 +53,7 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
         CancelCheckCommand = new RelayCommand(_ => ClearCheck());
         CloseCommand = new RelayCommand(_ => RequestClose?.Invoke(this, false));
         NewCheckCommand = new RelayCommand(_ => ClearCheck());
-        OpenClientCardCommand = new RelayCommand(_ => OpenClientCard());
+        OpenDiscountCardsCommand = new AsyncRelayCommand(async _ => await OpenDiscountCardsAsync());
         SearchGoodsCommand = new RelayCommand(_ => SearchCommand.Execute(null));
         ReturnCommand = new RelayCommand(_ => MessageBox.Show("Режим повернення буде додано в наступних версіях.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information));
         DiscountCommand = new RelayCommand(_ => MessageBox.Show("Налаштуйте персональну знижку через картку клієнта.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information));
@@ -113,6 +114,36 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
     public string CashierInfo { get => _cashierInfo; set => SetProperty(ref _cashierInfo, value); }
     public string CustomerInfo { get => _customerInfo; set => SetProperty(ref _customerInfo, value); }
     public string CardInfo { get => _cardInfo; set => SetProperty(ref _cardInfo, value); }
+    public Customer? SelectedDiscountCard
+    {
+        get => _selectedDiscountCard;
+        set
+        {
+            if (!SetProperty(ref _selectedDiscountCard, value))
+            {
+                return;
+            }
+
+            SelectedDiscountCardNumber = value?.DiscountCardNumber ?? string.Empty;
+            SelectedCustomerName = value?.Name ?? string.Empty;
+            OnPropertyChanged(nameof(SelectedDiscountCardNumber));
+            OnPropertyChanged(nameof(SelectedCustomerName));
+
+            CustomerInfo = string.IsNullOrWhiteSpace(SelectedCustomerName)
+                ? "Клієнт: не вибрано"
+                : $"Клієнт: {SelectedCustomerName}";
+            CardInfo = string.IsNullOrWhiteSpace(SelectedDiscountCardNumber)
+                ? "Картка: -"
+                : $"Картка: {SelectedDiscountCardNumber}";
+            OnPropertyChanged(nameof(DiscountPercent));
+            OnPropertyChanged(nameof(BonusBalance));
+        }
+    }
+
+    public string SelectedDiscountCardNumber { get; private set; } = string.Empty;
+    public string SelectedCustomerName { get; private set; } = string.Empty;
+    public decimal DiscountPercent => SelectedDiscountCard?.DiscountPercent ?? 0;
+    public decimal BonusBalance => SelectedDiscountCard?.BonusBalance ?? 0;
 
     public AsyncRelayCommand SearchCommand { get; }
     public AsyncRelayCommand ScanBarcodeCommand { get; }
@@ -124,7 +155,7 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
     public RelayCommand CancelCheckCommand { get; }
     public RelayCommand CloseCommand { get; }
     public RelayCommand NewCheckCommand { get; }
-    public RelayCommand OpenClientCardCommand { get; }
+    public AsyncRelayCommand OpenDiscountCardsCommand { get; }
     public RelayCommand SearchGoodsCommand { get; }
     public RelayCommand ReturnCommand { get; }
     public RelayCommand DiscountCommand { get; }
@@ -158,14 +189,13 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
         }
     }
 
-    private void OpenClientCard()
+    private async Task OpenDiscountCardsAsync()
     {
-        _clientCardViewModel.Load(null);
-        var result = _dialogService.ShowDialog(_clientCardViewModel);
+        await _discountCardsListViewModel.LoadAsync();
+        var result = _dialogService.ShowDialog(_discountCardsListViewModel);
         if (result == true)
         {
-            CustomerInfo = $"Клієнт: {_clientCardViewModel.CustomerName}";
-            CardInfo = $"Картка: {_clientCardViewModel.DiscountCardNumber}";
+            SelectedDiscountCard = _discountCardsListViewModel.SelectedCard;
         }
     }
 
@@ -348,6 +378,7 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
         CheckItems.Clear();
         Received = 0;
         BarcodeInput = string.Empty;
+        SelectedDiscountCard = null;
         RaiseTotals();
     }
 
