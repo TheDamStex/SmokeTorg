@@ -22,15 +22,25 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
     private bool _hasBarcodeError;
     private Product? _selectedProduct;
     private CancellationTokenSource? _barcodeErrorCts;
+    private string _terminalInfo = "Каса №1";
+    private string _cashierInfo = "Касир: оператор";
+    private string _customerInfo = "Клієнт: не вибрано";
+    private string _cardInfo = "Картка: -";
+    private readonly IDialogService _dialogService;
+    private readonly ClientCardViewModel _clientCardViewModel;
 
     public PosWindowViewModel(
         ProductService productService,
         SalesService salesService,
-        InventoryService inventoryService)
+        InventoryService inventoryService,
+        IDialogService dialogService,
+        ClientCardViewModel clientCardViewModel)
     {
         _productService = productService;
         _salesService = salesService;
         _inventoryService = inventoryService;
+        _dialogService = dialogService;
+        _clientCardViewModel = clientCardViewModel;
 
         SearchCommand = new AsyncRelayCommand(async _ => await SearchAsync());
         ScanBarcodeCommand = new AsyncRelayCommand(async _ => await ScanBarcodeAsync());
@@ -41,6 +51,12 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
         PayCommand = new AsyncRelayCommand(async _ => await PayAsync(), _ => !HasErrors);
         CancelCheckCommand = new RelayCommand(_ => ClearCheck());
         CloseCommand = new RelayCommand(_ => RequestClose?.Invoke(this, false));
+        NewCheckCommand = new RelayCommand(_ => ClearCheck());
+        OpenClientCardCommand = new RelayCommand(_ => OpenClientCard());
+        SearchGoodsCommand = new RelayCommand(_ => SearchCommand.Execute(null));
+        ReturnCommand = new RelayCommand(_ => MessageBox.Show("Режим повернення буде додано в наступних версіях.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information));
+        DiscountCommand = new RelayCommand(_ => MessageBox.Show("Налаштуйте персональну знижку через картку клієнта.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information));
+        PrintCommand = new RelayCommand(_ => MessageBox.Show("Друк чека буде доступний після підключення фіскального принтера.", "Інформація", MessageBoxButton.OK, MessageBoxImage.Information));
 
         CheckItems.CollectionChanged += (_, _) => OnCheckChanged();
         ValidateAll();
@@ -89,8 +105,14 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
 
     public decimal Subtotal => CheckItems.Sum(x => x.Sum);
     public decimal Discount => 0;
+    public decimal Prepayment => 0;
     public decimal Total => Subtotal - Discount;
     public decimal Change => Received - Total;
+    public DateTime WorkDate => DateTime.Now;
+    public string TerminalInfo { get => _terminalInfo; set => SetProperty(ref _terminalInfo, value); }
+    public string CashierInfo { get => _cashierInfo; set => SetProperty(ref _cashierInfo, value); }
+    public string CustomerInfo { get => _customerInfo; set => SetProperty(ref _customerInfo, value); }
+    public string CardInfo { get => _cardInfo; set => SetProperty(ref _cardInfo, value); }
 
     public AsyncRelayCommand SearchCommand { get; }
     public AsyncRelayCommand ScanBarcodeCommand { get; }
@@ -101,6 +123,12 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
     public AsyncRelayCommand PayCommand { get; }
     public RelayCommand CancelCheckCommand { get; }
     public RelayCommand CloseCommand { get; }
+    public RelayCommand NewCheckCommand { get; }
+    public RelayCommand OpenClientCardCommand { get; }
+    public RelayCommand SearchGoodsCommand { get; }
+    public RelayCommand ReturnCommand { get; }
+    public RelayCommand DiscountCommand { get; }
+    public RelayCommand PrintCommand { get; }
 
     public event EventHandler<bool?>? RequestClose;
 
@@ -127,6 +155,17 @@ public class PosWindowViewModel : ViewModelBase, IDialogRequestClose
                     AddError(nameof(Received), "Отримано має бути не менше суми до оплати");
                 }
                 break;
+        }
+    }
+
+    private void OpenClientCard()
+    {
+        _clientCardViewModel.Load(null);
+        var result = _dialogService.ShowDialog(_clientCardViewModel);
+        if (result == true)
+        {
+            CustomerInfo = $"Клієнт: {_clientCardViewModel.CustomerName}";
+            CardInfo = $"Картка: {_clientCardViewModel.DiscountCardNumber}";
         }
     }
 

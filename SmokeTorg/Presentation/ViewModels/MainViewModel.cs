@@ -19,6 +19,7 @@ public class MainViewModel : ViewModelBase
     private readonly GoodsReceiptViewModel _goodsReceiptViewModel;
     private readonly PosWindowViewModel _posWindowViewModel;
     private readonly StockViewModel _stockViewModel;
+    private readonly ClientCardViewModel _clientCardViewModel;
     private object? _currentViewModel;
     private bool _isHomeView = true;
 
@@ -31,7 +32,8 @@ public class MainViewModel : ViewModelBase
         IDialogService dialogService,
         GoodsReceiptViewModel goodsReceiptViewModel,
         PosWindowViewModel posWindowViewModel,
-        StockViewModel stockViewModel)
+        StockViewModel stockViewModel,
+        ClientCardViewModel clientCardViewModel)
     {
         _loginVm = loginVm;
         _posVm = posVm;
@@ -42,6 +44,7 @@ public class MainViewModel : ViewModelBase
         _goodsReceiptViewModel = goodsReceiptViewModel;
         _posWindowViewModel = posWindowViewModel;
         _stockViewModel = stockViewModel;
+        _clientCardViewModel = clientCardViewModel;
 
         AppTitle = "SmokeTorg";
         StoreName = "Магазин: Central Store";
@@ -92,6 +95,12 @@ public class MainViewModel : ViewModelBase
             await _stockViewModel.LoadAsync();
             _dialogService.ShowDialog(_stockViewModel);
         });
+
+        OpenClientCardCommand = new RelayCommand(_ =>
+        {
+            _clientCardViewModel.Load(null);
+            _dialogService.ShowDialog(_clientCardViewModel);
+        });
     }
 
     public object? CurrentViewModel { get => _currentViewModel; set => SetProperty(ref _currentViewModel, value); }
@@ -124,6 +133,7 @@ public class MainViewModel : ViewModelBase
     public AsyncRelayCommand OpenGoodsReceiptCommand { get; }
     public RelayCommand OpenPosCommand { get; }
     public AsyncRelayCommand OpenStockCommand { get; }
+    public RelayCommand OpenClientCardCommand { get; }
 
     private void Navigate(object? p)
     {

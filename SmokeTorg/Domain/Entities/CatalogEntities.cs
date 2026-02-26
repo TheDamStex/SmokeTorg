@@ -35,8 +35,25 @@ public class Supplier : BaseEntity
 public class Customer : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string MiddleName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Region { get; set; } = string.Empty;
+    public string DiscountCardNumber { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = string.Empty;
+    public string CardType { get; set; } = string.Empty;
+    public decimal InitialDiscountAmount { get; set; }
     public decimal DiscountPercent { get; set; }
+    public decimal BonusBalance { get; set; }
+    public bool IsVip { get; set; }
+    public bool IsBlocked { get; set; }
+    public string Country { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string RegionArea { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
+    public string Note { get; set; } = string.Empty;
     public decimal BonusPoints { get; set; }
 }
 
