@@ -102,7 +102,6 @@
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="BarcodeBox"
                              Grid.Column="0"
-                             Style="{StaticResource AppTextBoxStyle}"
                              Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
                              ToolTip="Штрихкод/пошук">
                         <TextBox.InputBindings>

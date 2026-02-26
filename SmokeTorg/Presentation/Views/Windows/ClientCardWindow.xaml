@@ -133,7 +133,7 @@
                     <Grid Margin="8">
                         <DataGrid Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding FamilyMembers}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Родинний зв'язок" Binding="{Binding РодиннийЗв'язок}" Width="*"/>
+                                <DataGridTextColumn Header="Родинний зв'язок" Binding="{Binding Path='РодиннийЗв''язок'}" Width="*"/>
                                 <DataGridTextColumn Header="ПІБ" Binding="{Binding ПІБ}" Width="2*"/>
                                 <DataGridTextColumn Header="Телефон" Binding="{Binding Телефон}" Width="*"/>
                             </DataGrid.Columns>
