@@ -211,15 +211,15 @@ public class ClientCardViewModel : ViewModelBase, IDialogRequestClose
 
 public class FamilyMemberRow
 {
-    public string РодиннийЗв'язок { get; set; } = string.Empty;
-    public string ПІБ { get; set; } = string.Empty;
-    public string Телефон { get; set; } = string.Empty;
+    public string Relationship { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
 }
 
 public class PurchaseRow
 {
-    public DateTime Дата { get; set; }
-    public string Документ { get; set; } = string.Empty;
-    public decimal Сума { get; set; }
-    public decimal НарахованоБонусів { get; set; }
+    public DateTime Date { get; set; }
+    public string Document { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal BonusAccrued { get; set; }
 }
