@@ -64,4 +64,6 @@ public class User : BaseEntity
     public string Salt { get; set; } = string.Empty;
     public UserRole Role { get; set; } = UserRole.Cashier;
     public bool IsActive { get; set; } = true;
+    public string FullName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,0 +1,29 @@
+<Window x:Class="SmokeTorg.Presentation.Views.Windows.UserManagementWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Керування користувачами" Height="520" Width="900" WindowStartupLocation="CenterOwner">
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <DataGrid Grid.Column="0" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Логін" Binding="{Binding Username}"/>
+                <DataGridTextColumn Header="Роль" Binding="{Binding Role}"/>
+                <DataGridCheckBoxColumn Header="Активний" Binding="{Binding IsActive}"/>
+                <DataGridTextColumn Header="ПІБ" Binding="{Binding FullName}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+            <TextBlock Text="Створити користувача" FontSize="16" FontWeight="SemiBold"/>
+            <TextBlock Text="Логін"/><TextBox Text="{Binding NewUsername}"/>
+            <TextBlock Text="Пароль"/><TextBox Text="{Binding NewPassword}"/>
+            <TextBlock Text="ПІБ"/><TextBox Text="{Binding NewFullName}"/>
+            <TextBlock Text="Роль"/>
+            <ComboBox ItemsSource="{Binding Roles}" SelectedItem="{Binding NewRole}"/>
+            <Button Content="Створити" Command="{Binding CreateUserCommand}" Margin="0,8,0,0"/>
+            <Button Content="Активувати/деактивувати" Command="{Binding ToggleActiveCommand}" Margin="0,8,0,0"/>
+            <Button Content="Скинути пароль" Command="{Binding ResetPasswordCommand}" Margin="0,8,0,0"/>
+            <Button Content="Оновити" Command="{Binding LoadCommand}" Margin="0,8,0,0"/>
+            <TextBlock Text="{Binding Status}" Foreground="DarkBlue" Margin="0,10,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+</Window>
