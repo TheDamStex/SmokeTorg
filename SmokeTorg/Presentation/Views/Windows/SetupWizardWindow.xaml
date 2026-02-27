@@ -196,7 +196,7 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <StackPanel IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
+                            <StackPanel IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBoolConverter}}">
                                 <UniformGrid Columns="2" Margin="0,0,0,8">
                                     <StackPanel Margin="0,0,12,10">
                                         <TextBlock Text="Хост" Style="{StaticResource FormLabelStyle}"/>
@@ -246,7 +246,7 @@
                                             Style="{StaticResource PrimaryButtonStyle}"
                                             Width="220"
                                             HorizontalAlignment="Left"
-                                            Command="{Binding CheckConnectionCommand}"/>
+                                            Command="{Binding TestConnectionCommand}"/>
                                     <Button Content="Діагностика"
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             Width="160"
@@ -254,7 +254,21 @@
                                             Command="{Binding RunDiagnosticsCommand}"/>
                                 </StackPanel>
                             </StackPanel>
-                            <TextBlock Grid.Row="1" Text="{Binding Status}" Foreground="#344054" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding ConnectionStatusMessage}" TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#B42318"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsConnectionVerified}" Value="True">
+                                                    <Setter Property="Foreground" Value="#067647"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Status}" Foreground="#344054" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
                         </Grid>
 
                         <Grid x:Name="SchemaStep" Visibility="{Binding IsStep2, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -390,13 +404,27 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <ProgressBar Width="180" Height="8" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                    <TextBlock Text=" Виконується операція..." Foreground="#667085" VerticalAlignment="Center" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <ProgressBar Width="180" Height="8" IsIndeterminate="True" Visibility="{Binding IsTesting, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <TextBlock Text=" Виконується операція..." Foreground="#667085" VerticalAlignment="Center" Visibility="{Binding IsTesting, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Назад" Width="110" Margin="0,0,8,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding BackCommand}"/>
-                    <Button Content="Далі" Width="110" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding NextCommand}"/>
+                    <Button Content="Далі" Width="110" Margin="0,0,8,0" Command="{Binding NextCommand}" ToolTipService.ShowOnDisabled="True">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsStep1}" Value="True"/>
+                                            <Condition Binding="{Binding IsConnectionVerified}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="ToolTip" Value="Спочатку перевірте з’єднання"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <Button Content="Завершити" Width="120" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding FinishCommand}"/>
                 </StackPanel>
             </Grid>

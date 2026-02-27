@@ -35,11 +35,14 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     private string _adminFullName = string.Empty;
 
     private bool _isBusy;
-    private bool _connectionTestPassed;
+    private bool _isTesting;
+    private bool _isConnectionVerified;
     private bool _schemaInitialized;
     private bool _adminCreated;
     private int _schemaVersion;
     private string _status = "Готово до налаштування.";
+    private string _connectionStatusMessage = "Спочатку перевірте з’єднання.";
+    private int? _lastMySqlErrorNumber;
 
     public SetupWizardViewModel(IDbSettingsService dbSettingsService, IDbInitializer dbInitializer, IUserService userService)
     {
@@ -47,7 +50,8 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         _dbInitializer = dbInitializer;
         _userService = userService;
 
-        CheckConnectionCommand = new AsyncRelayCommand(async _ => await CheckConnectionAsync(), _ => CanCheckConnection);
+        TestConnectionCommand = new AsyncRelayCommand(async _ => await TestConnectionAsync(), _ => CanTestConnection);
+        CheckConnectionCommand = TestConnectionCommand;
         RunDiagnosticsCommand = new AsyncRelayCommand(async _ => await RunDiagnosticsAsync(), _ => CanRunDiagnostics);
         InitializeSchemaCommand = new AsyncRelayCommand(async _ => await InitializeSchemaAsync(), _ => CanInitializeSchema);
         CreateAdminCommand = new AsyncRelayCommand(async _ => await CreateAdminAsync(), _ => CanCreateAdmin);
@@ -271,11 +275,43 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         ? "Увага: AllowPublicKeyRetrieval увімкнено. Використовуйте лише для локального з’єднання без SSL."
         : null;
 
-    public bool CanCheckConnection => !IsBusy && IsConnectionInputValid;
+    public bool IsTesting
+    {
+        get => _isTesting;
+        private set => SetProperty(ref _isTesting, value);
+    }
+
+    public bool IsConnectionVerified
+    {
+        get => _isConnectionVerified;
+        private set
+        {
+            if (SetProperty(ref _isConnectionVerified, value))
+            {
+                OnPropertyChanged(nameof(CanGoToInitialization));
+                RefreshCommandStates();
+            }
+        }
+    }
+
+    public string ConnectionStatusMessage
+    {
+        get => _connectionStatusMessage;
+        private set => SetProperty(ref _connectionStatusMessage, value);
+    }
+
+    public int? LastMySqlErrorNumber
+    {
+        get => _lastMySqlErrorNumber;
+        private set => SetProperty(ref _lastMySqlErrorNumber, value);
+    }
+
+    public bool CanTestConnection => !IsBusy && IsConnectionInputValid;
+    public bool CanCheckConnection => CanTestConnection;
     public bool CanRunDiagnostics => !IsBusy && IsConnectionInputValid;
-    public bool CanInitializeSchema => !IsBusy && IsStep2 && _connectionTestPassed;
+    public bool CanInitializeSchema => !IsBusy && IsStep2 && IsConnectionVerified;
     public bool CanCreateAdmin => !IsBusy && IsStep3 && IsAdminInputValid;
-    public bool CanGoToInitialization => _connectionTestPassed;
+    public bool CanGoToInitialization => IsConnectionVerified && IsConnectionInputValid;
     public bool CanGoToAdmin => _schemaInitialized && SchemaVersion > 0;
     public bool CanGoToSummary => _adminCreated;
 
@@ -330,6 +366,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         "5) Немає прав CREATE DATABASE — показати підказку про потрібні привілеї."
     ];
 
+    public AsyncRelayCommand TestConnectionCommand { get; }
     public AsyncRelayCommand CheckConnectionCommand { get; }
     public AsyncRelayCommand RunDiagnosticsCommand { get; }
     public AsyncRelayCommand InitializeSchemaCommand { get; }
@@ -418,35 +455,42 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         RefreshCommandStates();
     }
 
-    private async Task CheckConnectionAsync()
+    private async Task TestConnectionAsync()
     {
         if (!ValidateConnectionStep())
         {
-            Status = GetConnectionValidationMessage();
+            ConnectionStatusMessage = GetConnectionValidationMessage();
+            Status = ConnectionStatusMessage;
+            IsConnectionVerified = false;
             return;
         }
 
         if (!CanUsePublicKeyRetrieval())
         {
-            Status = "AllowPublicKeyRetrieval дозволено лише для локального з’єднання без SSL.";
-            AddLog(Status, WizardLogType.Error);
+            ConnectionStatusMessage = "❌ AllowPublicKeyRetrieval дозволено лише для локального з’єднання без SSL.";
+            Status = ConnectionStatusMessage;
+            IsConnectionVerified = false;
+            AddLog(ConnectionStatusMessage, WizardLogType.Error);
             return;
         }
 
         try
         {
             IsBusy = true;
+            IsTesting = true;
+            LastMySqlErrorNumber = null;
             AddLog("Перевірка підключення до сервера MySQL (без вибору БД)…", WizardLogType.Info);
 
-            var settings = BuildSettings();
-            var serverConnectionString = _dbSettingsService.GetServerConnectionString(settings);
+            var serverConnectionString = BuildServerConnectionString();
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var serverResult = await _dbInitializer.TestServerConnectionAsync(serverConnectionString, cts.Token);
             if (!serverResult.Success)
             {
-                _connectionTestPassed = false;
-                Status = MapMySqlErrorForUser(serverResult.DebugException, serverResult.Message);
+                IsConnectionVerified = false;
+                LastMySqlErrorNumber = (serverResult.DebugException as MySqlException)?.Number;
+                ConnectionStatusMessage = $"❌ {MapMySqlErrorForUser(serverResult.DebugException, serverResult.Message)}";
+                Status = ConnectionStatusMessage;
                 AddLog($"[{serverResult.Code}] {serverResult.Message}", WizardLogType.Error, serverResult.DebugException);
                 return;
             }
@@ -455,26 +499,40 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
             var dbResult = await _dbInitializer.TestDatabaseExistsAsync(serverConnectionString, Database.Trim(), cts.Token);
             if (!dbResult.Success)
             {
-                _connectionTestPassed = false;
-                Status = MapMySqlErrorForUser(dbResult.DebugException, dbResult.Message);
+                if (string.Equals(dbResult.Code, "DB_NOT_FOUND", StringComparison.Ordinal))
+                {
+                    IsConnectionVerified = true;
+                    ConnectionStatusMessage = "✅ База не знайдена — створіть на кроці 2.";
+                    Status = ConnectionStatusMessage;
+                    AddLog("База даних не знайдена. Продовжуйте на кроці 2 для створення.", WizardLogType.Info);
+                    return;
+                }
+
+                IsConnectionVerified = false;
+                LastMySqlErrorNumber = (dbResult.DebugException as MySqlException)?.Number;
+                ConnectionStatusMessage = $"❌ {MapMySqlErrorForUser(dbResult.DebugException, dbResult.Message)}";
+                Status = ConnectionStatusMessage;
                 AddLog($"[{dbResult.Code}] {dbResult.Message}", WizardLogType.Error, dbResult.DebugException);
                 return;
             }
 
-            _connectionTestPassed = true;
-            Status = "З’єднання успішне. Сервер доступний, базу даних знайдено.";
+            IsConnectionVerified = true;
+            ConnectionStatusMessage = "✅ Успішно: сервер доступний, авторизація виконана.";
+            Status = ConnectionStatusMessage;
             AddLog("З’єднання успішне. Сервер доступний, базу даних знайдено.", WizardLogType.Success);
         }
         catch (Exception ex)
         {
-            _connectionTestPassed = false;
-            Status = "Не вдалося виконати перевірку підключення.";
-            AddLog(Status, WizardLogType.Error, ex);
+            IsConnectionVerified = false;
+            LastMySqlErrorNumber = (ex as MySqlException)?.Number;
+            ConnectionStatusMessage = "❌ Не вдалося виконати перевірку підключення.";
+            Status = ConnectionStatusMessage;
+            AddLog(ConnectionStatusMessage, WizardLogType.Error, ex);
         }
         finally
         {
+            IsTesting = false;
             IsBusy = false;
-            OnPropertyChanged(nameof(CanGoToInitialization));
             RefreshCommandStates();
         }
     }
@@ -551,8 +609,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private async Task RunMySqlDiagnosticAsync()
     {
-        var settings = BuildSettings();
-        var serverConnectionString = _dbSettingsService.GetServerConnectionString(settings);
+        var serverConnectionString = BuildServerConnectionString();
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         var result = await _dbInitializer.TestServerConnectionAsync(serverConnectionString, cts.Token);
@@ -719,12 +776,42 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         };
     }
 
+    private string BuildServerConnectionString()
+    {
+        var settings = BuildSettings();
+        var sslMode = settings.SslMode switch
+        {
+            DbSslMode.None => MySqlSslMode.None,
+            DbSslMode.Required => MySqlSslMode.Required,
+            _ => MySqlSslMode.Preferred
+        };
+
+        var builder = new MySqlConnectionStringBuilder
+        {
+            Server = settings.Host,
+            Port = (uint)settings.Port,
+            Database = string.Empty,
+            UserID = settings.User,
+            Password = settings.Password,
+            CharacterSet = "utf8mb4",
+            SslMode = sslMode,
+            ConnectionTimeout = 8,
+            DefaultCommandTimeout = 10,
+            Pooling = true,
+            AllowUserVariables = true,
+            AllowPublicKeyRetrieval = settings.SslMode == DbSslMode.None && IsLocalHost(settings.Host) && settings.AllowPublicKeyRetrieval
+        };
+
+        return builder.ConnectionString;
+    }
+
     private void InvalidateConnectionState()
     {
-        _connectionTestPassed = false;
+        IsConnectionVerified = false;
         _schemaInitialized = false;
         SchemaVersion = 0;
-        OnPropertyChanged(nameof(CanGoToInitialization));
+        ConnectionStatusMessage = "Спочатку перевірте з’єднання.";
+        LastMySqlErrorNumber = null;
         OnPropertyChanged(nameof(SummaryConnection));
         OnPropertyChanged(nameof(SummaryUser));
         RefreshCommandStates();
@@ -780,6 +867,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private void RefreshCommandStates()
     {
+        TestConnectionCommand.RaiseCanExecuteChanged();
         CheckConnectionCommand.RaiseCanExecuteChanged();
         RunDiagnosticsCommand.RaiseCanExecuteChanged();
         InitializeSchemaCommand.RaiseCanExecuteChanged();
