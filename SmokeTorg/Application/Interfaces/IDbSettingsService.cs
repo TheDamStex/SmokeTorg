@@ -27,3 +27,14 @@ public interface IDbSettingsService
     string GetServerConnectionString(DbSettings settings);
     Task<bool> IsConfiguredAsync();
 }
+
+public interface IConnectionStringProvider
+{
+    void SetRuntimeSettings(DbSettings settings);
+    void ClearRuntimeSettings();
+    DbSettings? GetRuntimeSettings();
+    Task<string> GetConnectionStringAsync();
+    Task<string> GetServerConnectionStringAsync();
+    string GetConnectionString(DbSettings settings);
+    string GetServerConnectionString(DbSettings settings);
+}

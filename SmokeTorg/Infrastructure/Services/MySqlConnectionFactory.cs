@@ -3,12 +3,11 @@ using SmokeTorg.Application.Interfaces;
 
 namespace SmokeTorg.Infrastructure.Services;
 
-public class MySqlConnectionFactory(IDbSettingsService settingsService) : IMySqlConnectionFactory
+public class MySqlConnectionFactory(IConnectionStringProvider connectionStringProvider) : IMySqlConnectionFactory
 {
     public async Task<MySqlConnection> CreateOpenConnectionAsync()
     {
-        var settings = await settingsService.LoadAsync();
-        var connection = new MySqlConnection(settingsService.GetConnectionString(settings));
+        var connection = new MySqlConnection(await connectionStringProvider.GetConnectionStringAsync());
         await connection.OpenAsync();
         return connection;
     }

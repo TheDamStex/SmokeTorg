@@ -17,6 +17,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     private static readonly Regex AdminUsernameRegex = new("^[A-Za-z0-9._-]+$", RegexOptions.Compiled);
 
     private readonly IDbSettingsService _dbSettingsService;
+    private readonly IConnectionStringProvider _connectionStringProvider;
     private readonly IDbInitializer _dbInitializer;
     private readonly IUserService _userService;
 
@@ -44,9 +45,14 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     private string _connectionStatusMessage = "Спочатку перевірте з’єднання.";
     private int? _lastMySqlErrorNumber;
 
-    public SetupWizardViewModel(IDbSettingsService dbSettingsService, IDbInitializer dbInitializer, IUserService userService)
+    public SetupWizardViewModel(
+        IDbSettingsService dbSettingsService,
+        IConnectionStringProvider connectionStringProvider,
+        IDbInitializer dbInitializer,
+        IUserService userService)
     {
         _dbSettingsService = dbSettingsService;
+        _connectionStringProvider = connectionStringProvider;
         _dbInitializer = dbInitializer;
         _userService = userService;
 
@@ -481,7 +487,10 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
             LastMySqlErrorNumber = null;
             AddLog("Перевірка підключення до сервера MySQL (без вибору БД)…", WizardLogType.Info);
 
+            ApplyRuntimeConnectionSettings();
+
             var serverConnectionString = BuildServerConnectionString();
+            AddConnectionDiagnostics("TestConnection:Server");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var serverResult = await _dbInitializer.TestServerConnectionAsync(serverConnectionString, cts.Token);
@@ -496,6 +505,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
             }
 
             AddLog("Підключення до сервера успішне. Перевіряю існування бази даних…", WizardLogType.Info);
+            AddConnectionDiagnostics("TestConnection:DatabaseExists");
             var dbResult = await _dbInitializer.TestDatabaseExistsAsync(serverConnectionString, Database.Trim(), cts.Token);
             if (!dbResult.Success)
             {
@@ -609,7 +619,9 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private async Task RunMySqlDiagnosticAsync()
     {
+        ApplyRuntimeConnectionSettings();
         var serverConnectionString = BuildServerConnectionString();
+        AddConnectionDiagnostics("Diagnostics:MySqlAuth");
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         var result = await _dbInitializer.TestServerConnectionAsync(serverConnectionString, cts.Token);
@@ -637,11 +649,13 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         {
             IsBusy = true;
             AddLog("Починаю ініціалізацію БД…", WizardLogType.Info);
+            ApplyRuntimeConnectionSettings();
             var settings = BuildSettings();
-            var serverConnection = _dbSettingsService.GetServerConnectionString(settings);
-            var appConnection = _dbSettingsService.GetConnectionString(settings);
+            var serverConnection = _connectionStringProvider.GetServerConnectionString(settings);
+            var appConnection = _connectionStringProvider.GetConnectionString(settings);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            AddConnectionDiagnostics("InitializeSchema:EnsureDatabase");
             var databaseResult = await _dbInitializer.EnsureDatabaseAsync(serverConnection, Database.Trim(), cts.Token);
             if (!databaseResult.Success)
             {
@@ -654,6 +668,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
             AddLog(databaseResult.Message, WizardLogType.Success);
 
+            AddConnectionDiagnostics("InitializeSchema:EnsureSchema");
             var schemaResult = await _dbInitializer.EnsureSchemaAsync(appConnection, cts.Token);
             if (!schemaResult.Success)
             {
@@ -702,6 +717,8 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         {
             IsBusy = true;
             AddLog("Створення адміністратора…", WizardLogType.Info);
+            ApplyRuntimeConnectionSettings();
+            AddConnectionDiagnostics("CreateAdmin");
 
             await _userService.CreateUserAsync(AdminLogin.Trim(), AdminPassword, UserRole.Admin, AdminFullName.Trim());
 
@@ -728,6 +745,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         try
         {
             await _dbSettingsService.SaveAsync(BuildSettings(true));
+            _connectionStringProvider.ClearRuntimeSettings();
             IsCompleted = true;
             Status = "Налаштування завершено.";
             AddLog("Налаштування збережено. Майстер завершено.", WizardLogType.Success);
@@ -778,31 +796,20 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private string BuildServerConnectionString()
     {
+        return _connectionStringProvider.GetServerConnectionString(BuildSettings());
+    }
+
+    private void ApplyRuntimeConnectionSettings()
+    {
+        _connectionStringProvider.SetRuntimeSettings(BuildSettings());
+    }
+
+    private void AddConnectionDiagnostics(string operation)
+    {
         var settings = BuildSettings();
-        var sslMode = settings.SslMode switch
-        {
-            DbSslMode.None => MySqlSslMode.None,
-            DbSslMode.Required => MySqlSslMode.Required,
-            _ => MySqlSslMode.Preferred
-        };
-
-        var builder = new MySqlConnectionStringBuilder
-        {
-            Server = settings.Host,
-            Port = (uint)settings.Port,
-            Database = string.Empty,
-            UserID = settings.User,
-            Password = settings.Password,
-            CharacterSet = "utf8mb4",
-            SslMode = sslMode,
-            ConnectionTimeout = 8,
-            DefaultCommandTimeout = 10,
-            Pooling = true,
-            AllowUserVariables = true,
-            AllowPublicKeyRetrieval = settings.SslMode == DbSslMode.None && IsLocalHost(settings.Host) && settings.AllowPublicKeyRetrieval
-        };
-
-        return builder.ConnectionString;
+        AddLog(
+            $"[{operation}] Server={settings.Host}; Port={settings.Port}; Database={settings.Database}; User={settings.User}; SslMode={settings.SslMode}; AllowPublicKeyRetrieval={settings.AllowPublicKeyRetrieval}",
+            WizardLogType.Info);
     }
 
     private void InvalidateConnectionState()
