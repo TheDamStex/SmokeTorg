@@ -79,15 +79,42 @@ ORDER BY Username;";
 
     private static User Map(MySqlDataReader reader) => new()
     {
-        Id = Guid.Parse(reader.GetString("Id")),
-        Username = reader.GetString("Username"),
-        PasswordHash = reader.GetString("PasswordHash"),
-        Salt = reader.GetString("PasswordSalt"),
+        Id = ReadGuid(reader, "Id"),
+        Username = ReadString(reader, "Username"),
+        PasswordHash = ReadString(reader, "PasswordHash"),
+        Salt = ReadString(reader, "PasswordSalt"),
         Role = (UserRole)reader.GetInt32("Role"),
         IsActive = reader.GetBoolean("IsActive"),
-        FullName = reader["FullName"] as string ?? string.Empty,
+        FullName = ReadString(reader, "FullName"),
         CreatedAt = reader.GetDateTime("CreatedAt")
     };
+
+    private static Guid ReadGuid(MySqlDataReader reader, string columnName)
+    {
+        var value = reader[columnName];
+        return value switch
+        {
+            Guid guid => guid,
+            string text when Guid.TryParse(text, out var parsed) => parsed,
+            byte[] bytes when bytes.Length == 16 => new Guid(bytes),
+            _ => throw new InvalidCastException($"Column '{columnName}' with type '{value.GetType().FullName}' cannot be converted to Guid.")
+        };
+    }
+
+    private static string ReadString(MySqlDataReader reader, string columnName)
+    {
+        var value = reader[columnName];
+        return value switch
+        {
+            DBNull => string.Empty,
+            string text => text,
+            Guid guid => guid.ToString(),
+            byte[] bytes when bytes.Length == 16 => new Guid(bytes).ToString(),
+            DateTime dateTime => dateTime.ToString("O"),
+            decimal number => number.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty
+        };
+    }
 
     private static void FillParameters(MySqlCommand command, User entity)
     {
