@@ -118,23 +118,22 @@ public class MySqlDbInitializer : IDbInitializer
     {
         if (exception is MySqlException mysqlException)
         {
-            return mysqlException.ErrorCode switch
+            return mysqlException.Number switch
             {
-                MySqlErrorCode.AccessDenied => OperationResult.Fail("DB_AUTH_FAILED", "Невірний логін або пароль.", mysqlException),
-                MySqlErrorCode.BadDbError => OperationResult.Fail("DB_NOT_FOUND", "База даних не існує. Її можна створити на наступному кроці.", mysqlException),
-                MySqlErrorCode.DbAccessDenied or MySqlErrorCode.TableAccessDeniedError => OperationResult.Fail(
+                1045 => OperationResult.Fail("DB_AUTH_FAILED", "Невірний логін або пароль.", mysqlException),
+                1049 => OperationResult.Fail("DB_NOT_FOUND", "База даних не існує. Її можна створити на наступному кроці.", mysqlException),
+                1044 or 1142 => OperationResult.Fail(
                     "DB_PERMISSION_DENIED",
                     permissionHint ?? "Недостатньо прав для виконання операції в MySQL.",
                     mysqlException),
-                MySqlErrorCode.UnableToConnectToHost => OperationResult.Fail("DB_HOST_UNREACHABLE", "Немає доступу до MySQL-сервера. Перевірте хост, порт і firewall.", mysqlException),
-                MySqlErrorCode.BadFieldError => OperationResult.Fail("DB_SCHEMA_MISMATCH", "Виявлено несумісність схеми бази даних.", mysqlException),
+                1042 or 2003 => OperationResult.Fail("DB_HOST_UNREACHABLE", "Неможливо підключитися до сервера MySQL (перевірте хост/порт).", mysqlException),
                 _ when mysqlException.Message.Contains("SSL", StringComparison.OrdinalIgnoreCase)
                     => OperationResult.Fail("DB_SSL_ERROR", "Помилка SSL-підключення. Перевірте режим SSL та сертифікати.", mysqlException),
                 _ when mysqlException.Message.Contains("Public Key Retrieval", StringComparison.OrdinalIgnoreCase)
                     => OperationResult.Fail("DB_PUBLIC_KEY_RETRIEVAL", "Сервер вимагає AllowPublicKeyRetrieval. Увімкніть лише для локального підключення без SSL.", mysqlException),
                 _ when mysqlException.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
                     => OperationResult.Fail("DB_TIMEOUT", "Час очікування MySQL вичерпано. Перевірте доступність сервера.", mysqlException),
-                _ => OperationResult.Fail("DB_UNKNOWN_ERROR", "Сталася невідома помилка MySQL.", mysqlException)
+                _ => OperationResult.Fail("DB_UNKNOWN_ERROR", $"Помилка MySQL ({mysqlException.Number}): {mysqlException.Message}", mysqlException)
             };
         }
 
