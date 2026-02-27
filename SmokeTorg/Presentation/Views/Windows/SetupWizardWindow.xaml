@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SmokeTorg.Presentation.ViewModels.Windows"
+        xmlns:app="clr-namespace:SmokeTorg.Application.Interfaces"
         Title="Майстер первинного налаштування"
         Width="1020"
         Height="700"
@@ -223,17 +224,35 @@
                                         <TextBox Style="{StaticResource AppTextBoxStyle}"
                                                  Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"/>
                                     </StackPanel>
-                                    <StackPanel Margin="0,0,0,10" VerticalAlignment="Bottom">
-                                        <CheckBox Content="Використовувати SSL" IsChecked="{Binding UseSsl}" Margin="0,0,0,8"/>
-                                        <CheckBox Content="Allow Public Key Retrieval" IsChecked="{Binding AllowPublicKeyRetrieval}"/>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Режим SSL" Style="{StaticResource FormLabelStyle}"/>
+                                        <ComboBox SelectedValue="{Binding SslMode}"
+                                                  SelectedValuePath="Tag"
+                                                  Style="{StaticResource AppComboBoxStyle}">
+                                            <ComboBoxItem Content="Preferred (рекомендовано)" Tag="{x:Static app:DbSslMode.Preferred}"/>
+                                            <ComboBoxItem Content="None (без SSL)" Tag="{x:Static app:DbSslMode.None}"/>
+                                            <ComboBoxItem Content="Required (обов’язково SSL)" Tag="{x:Static app:DbSslMode.Required}"/>
+                                        </ComboBox>
+                                        <CheckBox Content="Allow Public Key Retrieval"
+                                                  IsChecked="{Binding AllowPublicKeyRetrieval}"
+                                                  Margin="0,8,0,0"/>
                                     </StackPanel>
                                 </UniformGrid>
                                 <TextBlock Text="{Binding PasswordWarning}" Foreground="#B54708" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <Button Content="Перевірити з’єднання"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Width="220"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding CheckConnectionCommand}"/>
+                                <TextBlock Text="{Binding LocalSslHint}" Foreground="#475467" Margin="0,0,0,6" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding AllowPublicKeyWarning}" Foreground="#B54708" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Перевірити з’єднання"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Width="220"
+                                            HorizontalAlignment="Left"
+                                            Command="{Binding CheckConnectionCommand}"/>
+                                    <Button Content="Діагностика"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Width="160"
+                                            Margin="10,0,0,0"
+                                            Command="{Binding RunDiagnosticsCommand}"/>
+                                </StackPanel>
                             </StackPanel>
                             <TextBlock Grid.Row="1" Text="{Binding Status}" Foreground="#344054" Margin="0,8,0,0" TextWrapping="Wrap"/>
                         </Grid>

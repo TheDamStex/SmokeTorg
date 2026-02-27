@@ -2,6 +2,8 @@ namespace SmokeTorg.Application.Interfaces;
 
 public interface IDbInitializer
 {
+    Task<OperationResult> TestServerConnectionAsync(string serverConnectionString, CancellationToken cancellationToken = default);
+    Task<OperationResult> TestDatabaseExistsAsync(string serverConnectionString, string dbName, CancellationToken cancellationToken = default);
     Task<OperationResult> TestConnectionAsync(string connectionString, CancellationToken cancellationToken = default);
     Task<OperationResult> EnsureDatabaseAsync(string serverConnectionString, string dbName, CancellationToken cancellationToken = default);
     Task<OperationResult> EnsureSchemaAsync(string connectionString, CancellationToken cancellationToken = default);

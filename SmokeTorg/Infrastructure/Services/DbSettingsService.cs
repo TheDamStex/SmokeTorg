@@ -33,7 +33,7 @@ public class DbSettingsService : IDbSettingsService
                 Database = dto.Database,
                 User = dto.User,
                 Password = Unprotect(dto.Password),
-                UseSsl = dto.UseSsl,
+                SslMode = ParseSslMode(dto.SslMode, dto.UseSsl),
                 AllowPublicKeyRetrieval = dto.AllowPublicKeyRetrieval,
                 IsConfigured = dto.IsConfigured
             };
@@ -55,7 +55,7 @@ public class DbSettingsService : IDbSettingsService
                 Database = settings.Database,
                 User = settings.User,
                 Password = Protect(settings.Password),
-                UseSsl = settings.UseSsl,
+                SslMode = settings.SslMode.ToString(),
                 AllowPublicKeyRetrieval = settings.AllowPublicKeyRetrieval,
                 IsConfigured = settings.IsConfigured
             };
@@ -74,6 +74,13 @@ public class DbSettingsService : IDbSettingsService
                           || string.Equals(settings.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(settings.Host, "::1", StringComparison.OrdinalIgnoreCase);
 
+        var sslMode = settings.SslMode switch
+        {
+            DbSslMode.None => MySqlSslMode.None,
+            DbSslMode.Required => MySqlSslMode.Required,
+            _ => MySqlSslMode.Preferred
+        };
+
         var csb = new MySqlConnectionStringBuilder
         {
             Server = settings.Host,
@@ -82,12 +89,12 @@ public class DbSettingsService : IDbSettingsService
             UserID = settings.User,
             Password = settings.Password,
             CharacterSet = "utf8mb4",
-            SslMode = settings.UseSsl ? MySqlSslMode.Preferred : MySqlSslMode.None,
+            SslMode = sslMode,
             DefaultCommandTimeout = 30,
             ConnectionTimeout = 8,
             Pooling = true,
             AllowUserVariables = true,
-            AllowPublicKeyRetrieval = !settings.UseSsl && isLocalHost && settings.AllowPublicKeyRetrieval
+            AllowPublicKeyRetrieval = settings.SslMode == DbSslMode.None && isLocalHost && settings.AllowPublicKeyRetrieval
         };
 
         return csb.ConnectionString;
@@ -123,8 +130,19 @@ public class DbSettingsService : IDbSettingsService
         public string Database { get; set; } = "smoketorg";
         public string User { get; set; } = "root";
         public string Password { get; set; } = string.Empty;
+        public string? SslMode { get; set; }
         public bool UseSsl { get; set; }
         public bool AllowPublicKeyRetrieval { get; set; } = true;
         public bool IsConfigured { get; set; }
+    }
+
+    private static DbSslMode ParseSslMode(string? sslMode, bool useSsl)
+    {
+        if (Enum.TryParse<DbSslMode>(sslMode, true, out var parsedMode))
+        {
+            return parsedMode;
+        }
+
+        return useSsl ? DbSslMode.Preferred : DbSslMode.None;
     }
 }
