@@ -75,6 +75,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ILogger, SimpleLogger>();
         services.AddSingleton<IStorageProvider, JsonStorageProvider>();
         services.AddSingleton<IDbSettingsService, DbSettingsService>();
+        services.AddSingleton<IConnectionStringProvider, ConnectionStringProvider>();
         services.AddSingleton<IDbInitializer, MySqlDbInitializer>();
         services.AddSingleton<IMySqlConnectionFactory, MySqlConnectionFactory>();
 
