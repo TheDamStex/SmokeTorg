@@ -23,7 +23,7 @@ public partial class App : System.Windows.Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        ShutdownMode = ShutdownMode.OnLastWindowClose;
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         var collection = new ServiceCollection();
         ConfigureServices(collection);
@@ -38,14 +38,15 @@ public partial class App : System.Windows.Application
             var setupVm = Services.GetRequiredService<SetupWizardViewModel>();
             setupWindow.DataContext = setupVm;
 
-            void OnRequestClose(object? _, bool? dialogResult)
+            EventHandler<bool?>? setupRequestClose = null;
+            setupRequestClose = (_, dialogResult) =>
             {
-                setupVm.RequestClose -= OnRequestClose;
+                setupVm.RequestClose -= setupRequestClose;
                 setupWindow.DialogResult = dialogResult;
                 setupWindow.Close();
-            }
+            };
 
-            setupVm.RequestClose += OnRequestClose;
+            setupVm.RequestClose += setupRequestClose;
             var setupResult = setupWindow.ShowDialog();
             if (setupResult != true)
             {
@@ -58,10 +59,12 @@ public partial class App : System.Windows.Application
 
         var loginWindow = Services.GetRequiredService<LoginWindow>();
         var loginVm = Services.GetRequiredService<LoginViewModel>();
+        loginWindow.DataContext = loginVm;
 
-        async void OnRequestClose(object? _, bool? dialogResult)
+        EventHandler<bool?>? loginRequestClose = null;
+        loginRequestClose = async (_, dialogResult) =>
         {
-            loginVm.RequestClose -= OnRequestClose;
+            loginVm.RequestClose -= loginRequestClose;
 
             if (dialogResult != true)
             {
@@ -75,11 +78,12 @@ public partial class App : System.Windows.Application
 
             var mainWindow = Services.GetRequiredService<MainWindow>();
             MainWindow = mainWindow;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
             mainWindow.Show();
             loginWindow.Close();
-        }
+        };
 
-        loginVm.RequestClose += OnRequestClose;
+        loginVm.RequestClose += loginRequestClose;
         loginWindow.Show();
     }
 
