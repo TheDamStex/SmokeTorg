@@ -32,6 +32,17 @@ public partial class App : System.Windows.Application
         if (!settings.IsConfigured)
         {
             var setupWindow = Services.GetRequiredService<SetupWizardWindow>();
+            var setupVm = Services.GetRequiredService<SetupWizardViewModel>();
+            setupWindow.DataContext = setupVm;
+
+            void OnRequestClose(object? _, bool? dialogResult)
+            {
+                setupVm.RequestClose -= OnRequestClose;
+                setupWindow.DialogResult = dialogResult;
+                setupWindow.Close();
+            }
+
+            setupVm.RequestClose += OnRequestClose;
             var setupResult = setupWindow.ShowDialog();
             if (setupResult != true)
             {

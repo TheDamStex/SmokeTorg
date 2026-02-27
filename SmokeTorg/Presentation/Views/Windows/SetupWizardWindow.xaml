@@ -1,58 +1,398 @@
 <Window x:Class="SmokeTorg.Presentation.Views.Windows.SetupWizardWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Майстер первинного налаштування" Height="600" Width="820" WindowStartupLocation="CenterOwner">
-    <Grid Margin="16">
+        xmlns:behaviors="clr-namespace:SmokeTorg.Presentation.Behaviors"
+        xmlns:vm="clr-namespace:SmokeTorg.Presentation.ViewModels.Windows"
+        Title="Майстер первинного налаштування"
+        Width="1020"
+        Height="700"
+        MinWidth="900"
+        MinHeight="640"
+        Background="#F7F8FA"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=HostTextBox}">
+    <Window.Resources>
+        <Style x:Key="StepBadgeStyle" TargetType="Border">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="CornerRadius" Value="17"/>
+            <Setter Property="Background" Value="#EAECF0"/>
+        </Style>
+
+        <Style x:Key="StepBadgeTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#475467"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Foreground" Value="#344054"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style x:Key="CardContainerStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E6E6E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TabControl SelectedIndex="{Binding StepIndex}">
-            <TabItem Header="1. Підключення">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Параметри підключення" FontSize="18" FontWeight="SemiBold"/>
-                    <UniformGrid Columns="2" Margin="0,12,0,0">
-                        <TextBlock Text="Хост"/><TextBox Text="{Binding Host}"/>
-                        <TextBlock Text="Порт"/><TextBox Text="{Binding Port}"/>
-                        <TextBlock Text="База даних"/><TextBox Text="{Binding Database}"/>
-                        <TextBlock Text="Користувач"/><TextBox Text="{Binding User}"/>
-                        <TextBlock Text="Пароль"/><TextBox Text="{Binding Password}"/>
-                    </UniformGrid>
-                    <Button Content="Перевірити з’єднання" Command="{Binding CheckConnectionCommand}" Margin="0,12,0,0" Width="220"/>
-                    <TextBlock Text="{Binding Status}" Foreground="DarkBlue" Margin="0,8,0,0"/>
-                </StackPanel>
-            </TabItem>
-            <TabItem Header="2. Ініціалізація БД">
-                <StackPanel Margin="10">
-                    <Button Content="Створити структуру БД" Command="{Binding InitializeSchemaCommand}" Width="220"/>
-                    <ListBox ItemsSource="{Binding Logs}" Margin="0,12,0,0" Height="350"/>
-                </StackPanel>
-            </TabItem>
-            <TabItem Header="3. Адміністратор">
-                <StackPanel Margin="10">
-                    <UniformGrid Columns="2">
-                        <TextBlock Text="Логін"/><TextBox Text="{Binding AdminLogin}"/>
-                        <TextBlock Text="Пароль"/><TextBox Text="{Binding AdminPassword}"/>
-                        <TextBlock Text="Підтвердження пароля"/><TextBox Text="{Binding AdminConfirmPassword}"/>
-                        <TextBlock Text="ПІБ"/><TextBox Text="{Binding AdminFullName}"/>
-                    </UniformGrid>
-                    <Button Content="Створити адміністратора" Command="{Binding CreateAdminCommand}" Width="220" Margin="0,12,0,0"/>
-                    <TextBlock Text="{Binding Status}" Margin="0,8,0,0" Foreground="DarkBlue"/>
-                </StackPanel>
-            </TabItem>
-            <TabItem Header="4. Завершення">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Натисніть 'Завершити', щоб зберегти налаштування." FontSize="16"/>
-                    <Button Content="Завершити" Command="{Binding FinishCommand}" Width="140" Margin="0,12,0,0"/>
-                    <TextBlock Text="{Binding Status}" Margin="0,8,0,0"/>
-                </StackPanel>
-            </TabItem>
-        </TabControl>
+        <Border Grid.Row="0" Style="{StaticResource CardContainerStyle}" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Назад" Command="{Binding BackCommand}" Margin="0,0,8,0" Width="100"/>
-            <Button Content="Далі" Command="{Binding NextCommand}" Width="100"/>
-        </StackPanel>
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <Border Style="{StaticResource StepBadgeStyle}">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource StepBadgeStyle}">
+                                <Setter Property="Background" Value="#EAECF0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStep1}" Value="True">
+                                        <Setter Property="Background" Value="#FF7A00"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="1" Style="{StaticResource StepBadgeTextStyle}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StepBadgeTextStyle}">
+                                    <Setter Property="Foreground" Value="#475467"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStep1}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                    <TextBlock Text="🔌 Підключення" Margin="0,8,0,0" Foreground="#344054" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <Border Style="{StaticResource StepBadgeStyle}">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource StepBadgeStyle}">
+                                <Setter Property="Background" Value="#EAECF0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStep2}" Value="True">
+                                        <Setter Property="Background" Value="#FF7A00"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="2" Style="{StaticResource StepBadgeTextStyle}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StepBadgeTextStyle}">
+                                    <Setter Property="Foreground" Value="#475467"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStep2}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                    <TextBlock Text="🧱 Ініціалізація" Margin="0,8,0,0" Foreground="#344054" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <Border Style="{StaticResource StepBadgeStyle}">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource StepBadgeStyle}">
+                                <Setter Property="Background" Value="#EAECF0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStep3}" Value="True">
+                                        <Setter Property="Background" Value="#FF7A00"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="3" Style="{StaticResource StepBadgeTextStyle}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StepBadgeTextStyle}">
+                                    <Setter Property="Foreground" Value="#475467"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStep3}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                    <TextBlock Text="👤 Адміністратор" Margin="0,8,0,0" Foreground="#344054" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                    <Border Style="{StaticResource StepBadgeStyle}">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource StepBadgeStyle}">
+                                <Setter Property="Background" Value="#EAECF0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStep4}" Value="True">
+                                        <Setter Property="Background" Value="#FF7A00"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="4" Style="{StaticResource StepBadgeTextStyle}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StepBadgeTextStyle}">
+                                    <Setter Property="Foreground" Value="#475467"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStep4}" Value="True">
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                    <TextBlock Text="✅ Завершення" Margin="0,8,0,0" Foreground="#344054" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="1.2*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardContainerStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="{Binding StepTitle}" FontSize="24" FontWeight="SemiBold" Foreground="#101828"/>
+                    <TextBlock Grid.Row="1" Text="{Binding StepSubtitle}" Foreground="#667085" Margin="0,6,0,16"/>
+
+                    <Grid Grid.Row="2">
+                        <Grid x:Name="ConnectionStep" Visibility="{Binding IsStep1, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
+                                <UniformGrid Columns="2" Margin="0,0,0,8">
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Хост" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox x:Name="HostTextBox"
+                                                 Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding Host, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Порт" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding Port, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="База даних" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding Database, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Користувач" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding User, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Пароль" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 behaviors:EnterKeyNavigationBehavior.EnterCommand="{Binding CheckConnectionCommand}"
+                                                 Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,10" VerticalAlignment="Bottom">
+                                        <CheckBox Content="Використовувати SSL" IsChecked="{Binding UseSsl}" Margin="0,0,0,8"/>
+                                        <CheckBox Content="Allow Public Key Retrieval" IsChecked="{Binding AllowPublicKeyRetrieval}"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <TextBlock Text="{Binding PasswordWarning}" Foreground="#B54708" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                                <Button Content="Перевірити з’єднання"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Width="220"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding CheckConnectionCommand}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1" Text="{Binding Status}" Foreground="#344054" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid x:Name="SchemaStep" Visibility="{Binding IsStep2, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Після успішного виконання буде зафіксовано версію схеми." Foreground="#475467" Margin="0,0,0,12"/>
+                            <Button Grid.Row="1"
+                                    Content="Створити структуру БД"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Width="220"
+                                    HorizontalAlignment="Left"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                    Command="{Binding InitializeSchemaCommand}"/>
+                            <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                                <TextBlock Text="Поточна версія схеми" Foreground="#344054" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SchemaVersion}" FontSize="26" FontWeight="SemiBold" Foreground="#101828" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding Status}" Foreground="#344054" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid x:Name="AdminStep" Visibility="{Binding IsStep3, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
+                                <UniformGrid Columns="2" Margin="0,0,0,8">
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Логін" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding AdminLogin, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="ПІБ" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding AdminFullName, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Пароль" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 Text="{Binding AdminPassword, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Підтвердження пароля" Style="{StaticResource FormLabelStyle}"/>
+                                        <TextBox Style="{StaticResource AppTextBoxStyle}"
+                                                 behaviors:EnterKeyNavigationBehavior.MoveFocusOnEnter="True"
+                                                 behaviors:EnterKeyNavigationBehavior.EnterCommand="{Binding CreateAdminCommand}"
+                                                 Text="{Binding AdminConfirmPassword, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <Button Content="Створити адміністратора"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Width="220"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding CreateAdminCommand}"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1" Text="{Binding Status}" Foreground="#344054" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid x:Name="FinishStep" Visibility="{Binding IsStep4, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Перевірте узагальнені параметри перед завершенням:" Foreground="#344054" Margin="0,0,0,14"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="Підключення:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SummaryConnection}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Text="Користувач БД:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SummaryUser}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Text="Версія схеми:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SummarySchemaVersion}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="3" Text="Адміністратор:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SummaryAdminLogin}"/>
+                                </Grid>
+                                <TextBlock Text="{Binding Status}" Foreground="#344054" Margin="0,14,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardContainerStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Журнал" FontSize="18" FontWeight="SemiBold" Foreground="#101828"/>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Logs}" Margin="0,12,0,0" BorderThickness="0" Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:WizardLogEntry}">
+                                <Border Background="#FAFAFA" BorderBrush="#EFEFEF" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding TimeLabel}" Foreground="#98A2B3" FontSize="12"/>
+                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#344054"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Success">
+                                                            <Setter Property="Foreground" Value="#067647"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Error">
+                                                            <Setter Property="Foreground" Value="#B42318"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Style="{StaticResource CardContainerStyle}" Margin="0,14,0,0" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressBar Width="180" Height="8" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <TextBlock Text=" Виконується операція..." Foreground="#667085" VerticalAlignment="Center" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Назад" Width="110" Margin="0,0,8,0" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding BackCommand}"/>
+                    <Button Content="Далі" Width="110" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding NextCommand}"/>
+                    <Button Content="Завершити" Width="120" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding FinishCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
