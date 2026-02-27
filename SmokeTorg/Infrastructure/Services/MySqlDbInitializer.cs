@@ -6,11 +6,11 @@ namespace SmokeTorg.Infrastructure.Services;
 
 public class MySqlDbInitializer : IDbInitializer
 {
-    public async Task<OperationResult> TestConnectionAsync(string connectionString, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> TestServerConnectionAsync(string serverConnectionString, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var connection = new MySqlConnection(connectionString);
+            await using var connection = new MySqlConnection(serverConnectionString);
             await connection.OpenAsync(cancellationToken);
 
             await using var command = connection.CreateCommand();
@@ -18,12 +18,48 @@ public class MySqlDbInitializer : IDbInitializer
             command.CommandTimeout = 10;
             await command.ExecuteScalarAsync(cancellationToken);
 
-            return OperationResult.Ok("DB_CONNECTION_OK", "Підключення до MySQL успішне.");
+            return OperationResult.Ok("DB_SERVER_CONNECTION_OK", "Підключення до сервера MySQL успішне.");
         }
         catch (Exception ex)
         {
             return MapError(ex);
         }
+    }
+
+    public async Task<OperationResult> TestDatabaseExistsAsync(string serverConnectionString, string dbName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(dbName))
+        {
+            return OperationResult.Fail("DB_NAME_INVALID", "Некоректна назва бази даних.");
+        }
+
+        try
+        {
+            await using var connection = new MySqlConnection(serverConnectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = @db;";
+            command.CommandTimeout = 10;
+            command.Parameters.AddWithValue("@db", dbName.Trim());
+
+            var schemaName = await command.ExecuteScalarAsync(cancellationToken);
+            if (schemaName is null)
+            {
+                return OperationResult.Fail("DB_NOT_FOUND", "База даних не знайдена. Перейдіть до кроку 2 для створення.");
+            }
+
+            return OperationResult.Ok("DB_EXISTS", "Базу даних знайдено.");
+        }
+        catch (Exception ex)
+        {
+            return MapError(ex);
+        }
+    }
+
+    public async Task<OperationResult> TestConnectionAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        return await TestServerConnectionAsync(connectionString, cancellationToken);
     }
 
     public async Task<OperationResult> EnsureDatabaseAsync(string serverConnectionString, string dbName, CancellationToken cancellationToken = default)
@@ -118,22 +154,21 @@ public class MySqlDbInitializer : IDbInitializer
     {
         if (exception is MySqlException mysqlException)
         {
+            var details = BuildMysqlDetails(mysqlException);
             return mysqlException.Number switch
             {
-                1045 => OperationResult.Fail("DB_AUTH_FAILED", "Невірний логін або пароль.", mysqlException),
-                1049 => OperationResult.Fail("DB_NOT_FOUND", "База даних не існує. Її можна створити на наступному кроці.", mysqlException),
-                1044 or 1142 => OperationResult.Fail(
-                    "DB_PERMISSION_DENIED",
-                    permissionHint ?? "Недостатньо прав для виконання операції в MySQL.",
-                    mysqlException),
-                1042 or 2003 => OperationResult.Fail("DB_HOST_UNREACHABLE", "Неможливо підключитися до сервера MySQL (перевірте хост/порт).", mysqlException),
+                1045 => OperationResult.Fail("DB_AUTH_FAILED", $"Доступ заборонено. Причини: невірний логін/пароль АБО користувач не має доступу з цього хоста. {details}", mysqlException),
+                1049 => OperationResult.Fail("DB_NOT_FOUND", $"База даних не існує (потрібно створити на кроці 2). {details}", mysqlException),
+                1044 or 1142 => OperationResult.Fail("DB_PERMISSION_DENIED", $"Немає прав доступу до бази даних. {(permissionHint ?? string.Empty)} {details}".Trim(), mysqlException),
+                1042 or 2003 => OperationResult.Fail("DB_HOST_UNREACHABLE", $"Сервер недоступний (перевірте хост/порт/мережу). {details}", mysqlException),
+                1251 or 2054 => OperationResult.Fail("DB_AUTH_PLUGIN", $"Проблема сумісності методу автентифікації (плагін). {details}", mysqlException),
                 _ when mysqlException.Message.Contains("SSL", StringComparison.OrdinalIgnoreCase)
-                    => OperationResult.Fail("DB_SSL_ERROR", "Помилка SSL-підключення. Перевірте режим SSL та сертифікати.", mysqlException),
+                    => OperationResult.Fail("DB_SSL_ERROR", $"Помилка SSL-підключення. Перевірте режим SSL та сертифікати. {details}", mysqlException),
                 _ when mysqlException.Message.Contains("Public Key Retrieval", StringComparison.OrdinalIgnoreCase)
-                    => OperationResult.Fail("DB_PUBLIC_KEY_RETRIEVAL", "Сервер вимагає AllowPublicKeyRetrieval. Увімкніть лише для локального підключення без SSL.", mysqlException),
+                    => OperationResult.Fail("DB_PUBLIC_KEY_RETRIEVAL", $"Сервер вимагає AllowPublicKeyRetrieval. Увімкніть лише для локального підключення без SSL. {details}", mysqlException),
                 _ when mysqlException.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
-                    => OperationResult.Fail("DB_TIMEOUT", "Час очікування MySQL вичерпано. Перевірте доступність сервера.", mysqlException),
-                _ => OperationResult.Fail("DB_UNKNOWN_ERROR", $"Помилка MySQL ({mysqlException.Number}): {mysqlException.Message}", mysqlException)
+                    => OperationResult.Fail("DB_TIMEOUT", $"Час очікування MySQL вичерпано. Перевірте доступність сервера. {details}", mysqlException),
+                _ => OperationResult.Fail("DB_UNKNOWN_ERROR", $"Помилка MySQL ({mysqlException.Number}): {GetShortMessage(mysqlException.Message)}. {details}", mysqlException)
             };
         }
 
@@ -143,5 +178,16 @@ public class MySqlDbInitializer : IDbInitializer
         }
 
         return OperationResult.Fail("DB_GENERAL_ERROR", "Сталася помилка під час роботи з базою даних.", exception);
+    }
+
+    private static string BuildMysqlDetails(MySqlException exception)
+    {
+        return $"[Number={exception.Number}; SqlState={exception.SqlState ?? "n/a"}; Message={GetShortMessage(exception.Message)}]";
+    }
+
+    private static string GetShortMessage(string message)
+    {
+        var sanitized = message.Replace(Environment.NewLine, " ", StringComparison.Ordinal).Trim();
+        return sanitized.Length <= 220 ? sanitized : sanitized[..220] + "…";
     }
 }
