@@ -22,6 +22,9 @@ public partial class App : System.Windows.Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        base.OnStartup(e);
+        ShutdownMode = ShutdownMode.OnLastWindowClose;
+
         var collection = new ServiceCollection();
         ConfigureServices(collection);
         Services = collection.BuildServiceProvider();
@@ -54,20 +57,30 @@ public partial class App : System.Windows.Application
         }
 
         var loginWindow = Services.GetRequiredService<LoginWindow>();
-        var loginResult = loginWindow.ShowDialog();
-        if (loginResult != true)
+        var loginVm = Services.GetRequiredService<LoginViewModel>();
+
+        async void OnRequestClose(object? _, bool? dialogResult)
         {
-            Shutdown();
-            return;
+            loginVm.RequestClose -= OnRequestClose;
+
+            if (dialogResult != true)
+            {
+                loginWindow.Close();
+                Shutdown();
+                return;
+            }
+
+            var seeder = Services.GetRequiredService<DataSeeder>();
+            await seeder.EnsureSeedAsync();
+
+            var mainWindow = Services.GetRequiredService<MainWindow>();
+            MainWindow = mainWindow;
+            mainWindow.Show();
+            loginWindow.Close();
         }
 
-        var seeder = Services.GetRequiredService<DataSeeder>();
-        await seeder.EnsureSeedAsync();
-
-        var window = Services.GetRequiredService<MainWindow>();
-        MainWindow = window;
-        window.Show();
-        base.OnStartup(e);
+        loginVm.RequestClose += OnRequestClose;
+        loginWindow.Show();
     }
 
     private static void ConfigureServices(IServiceCollection services)

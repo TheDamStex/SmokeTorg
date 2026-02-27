@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SmokeTorg.Presentation.ViewModels"
-             xmlns:converters="clr-namespace:SmokeTorg.Common.Converters">
+             xmlns:converters="clr-namespace:SmokeTorg.Common.Converters"
+             ShutdownMode="OnLastWindowClose">
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
