@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using MySqlConnector;
 using SmokeTorg.Application.Interfaces;
-using System.IO;
 
 namespace SmokeTorg.Infrastructure.Services;
 
@@ -14,47 +13,66 @@ public class DbSettingsService : IDbSettingsService
 
     public DbSettingsService()
     {
-        var dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
+        var dataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SmokeTorg");
         Directory.CreateDirectory(dataDirectory);
         _path = Path.Combine(dataDirectory, "appsettings.local.json");
     }
 
     public async Task<DbSettings> LoadAsync()
     {
-        if (!File.Exists(_path)) return new DbSettings { IsConfigured = false };
-
-        var dto = JsonSerializer.Deserialize<DbSettingsDto>(await File.ReadAllTextAsync(_path)) ?? new DbSettingsDto();
-        return new DbSettings
+        try
         {
-            Host = dto.Host,
-            Port = dto.Port,
-            Database = dto.Database,
-            User = dto.User,
-            Password = Unprotect(dto.Password),
-            UseSsl = dto.UseSsl,
-            AllowPublicKeyRetrieval = dto.AllowPublicKeyRetrieval,
-            IsConfigured = dto.IsConfigured
-        };
+            if (!File.Exists(_path)) return new DbSettings { IsConfigured = false };
+
+            var dto = JsonSerializer.Deserialize<DbSettingsDto>(await File.ReadAllTextAsync(_path)) ?? new DbSettingsDto();
+            return new DbSettings
+            {
+                Host = dto.Host,
+                Port = dto.Port,
+                Database = dto.Database,
+                User = dto.User,
+                Password = Unprotect(dto.Password),
+                UseSsl = dto.UseSsl,
+                AllowPublicKeyRetrieval = dto.AllowPublicKeyRetrieval,
+                IsConfigured = dto.IsConfigured
+            };
+        }
+        catch
+        {
+            return new DbSettings { IsConfigured = false };
+        }
     }
 
     public async Task SaveAsync(DbSettings settings)
     {
-        var dto = new DbSettingsDto
+        try
         {
-            Host = settings.Host,
-            Port = settings.Port,
-            Database = settings.Database,
-            User = settings.User,
-            Password = Protect(settings.Password),
-            UseSsl = settings.UseSsl,
-            AllowPublicKeyRetrieval = settings.AllowPublicKeyRetrieval,
-            IsConfigured = settings.IsConfigured
-        };
-        await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(dto, JsonOptions));
+            var dto = new DbSettingsDto
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                User = settings.User,
+                Password = Protect(settings.Password),
+                UseSsl = settings.UseSsl,
+                AllowPublicKeyRetrieval = settings.AllowPublicKeyRetrieval,
+                IsConfigured = settings.IsConfigured
+            };
+
+            await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(dto, JsonOptions));
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Не вдалося зберегти налаштування бази даних.", ex);
+        }
     }
 
     public string GetConnectionString(DbSettings settings)
     {
+        var isLocalHost = string.Equals(settings.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(settings.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(settings.Host, "::1", StringComparison.OrdinalIgnoreCase);
+
         var csb = new MySqlConnectionStringBuilder
         {
             Server = settings.Host,
@@ -62,9 +80,15 @@ public class DbSettingsService : IDbSettingsService
             Database = settings.Database,
             UserID = settings.User,
             Password = settings.Password,
-            SslMode = settings.UseSsl ? MySqlSslMode.Required : MySqlSslMode.None,
-            AllowPublicKeyRetrieval = settings.AllowPublicKeyRetrieval
+            CharacterSet = "utf8mb4",
+            SslMode = settings.UseSsl ? MySqlSslMode.Preferred : MySqlSslMode.None,
+            DefaultCommandTimeout = 30,
+            ConnectionTimeout = 8,
+            Pooling = true,
+            AllowUserVariables = true,
+            AllowPublicKeyRetrieval = !settings.UseSsl && isLocalHost && settings.AllowPublicKeyRetrieval
         };
+
         return csb.ConnectionString;
     }
 

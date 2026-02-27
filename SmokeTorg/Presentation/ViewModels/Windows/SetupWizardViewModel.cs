@@ -22,7 +22,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     private string _database = "smoketorg";
     private string _user = "root";
     private string _password = string.Empty;
-    private bool _useSsl;
+    private bool _useSsl = true;
     private bool _allowPublicKeyRetrieval = true;
 
     private string _adminLogin = "admin";
@@ -305,6 +305,15 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     public ObservableCollection<WizardLogEntry> Logs { get; } = [];
 
+    public IReadOnlyList<string> SelfCheckScenarios { get; } =
+    [
+        "1) localhost:3306 root (без пароля) — успіх, якщо на сервері дозволений такий доступ.",
+        "2) Невірний порт — повідомлення: 'Некоректний порт'.",
+        "3) Невірний пароль — повідомлення: 'Невірний логін або пароль'.",
+        "4) База не існує — на кроці 2 створюється автоматично.",
+        "5) Немає прав CREATE DATABASE — показати підказку про потрібні привілеї."
+    ];
+
     public AsyncRelayCommand CheckConnectionCommand { get; }
     public AsyncRelayCommand InitializeSchemaCommand { get; }
     public AsyncRelayCommand CreateAdminCommand { get; }
@@ -396,7 +405,14 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     {
         if (!ValidateConnectionStep())
         {
-            Status = "Виправте помилки у параметрах підключення.";
+            Status = GetConnectionValidationMessage();
+            return;
+        }
+
+        if (!CanUsePublicKeyRetrieval())
+        {
+            Status = "AllowPublicKeyRetrieval дозволено лише для локального з’єднання без SSL.";
+            AddLog(Status, WizardLogType.Error);
             return;
         }
 
@@ -404,17 +420,20 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         {
             IsBusy = true;
             AddLog("Перевірка з’єднання з MySQL…", WizardLogType.Info);
-            await _dbInitializer.TestConnectionAsync(_dbSettingsService.GetConnectionString(BuildSettings()));
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var result = await _dbInitializer.TestConnectionAsync(_dbSettingsService.GetConnectionString(BuildSettings()), cts.Token);
+            if (!result.Success)
+            {
+                _connectionTestPassed = false;
+                Status = result.Message;
+                AddLog($"[{result.Code}] {result.Message}", WizardLogType.Error, result.DebugException);
+                return;
+            }
 
             _connectionTestPassed = true;
-            Status = "Підключення успішно перевірено.";
+            Status = result.Message;
             AddLog("З’єднання успішне.", WizardLogType.Success);
-        }
-        catch (Exception ex)
-        {
-            _connectionTestPassed = false;
-            Status = BuildFriendlyDbError(ex);
-            AddLog(Status, WizardLogType.Error);
         }
         finally
         {
@@ -426,6 +445,13 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private async Task InitializeSchemaAsync()
     {
+        if (!CanUsePublicKeyRetrieval())
+        {
+            Status = "AllowPublicKeyRetrieval дозволено лише для локального з’єднання без SSL.";
+            AddLog(Status, WizardLogType.Error);
+            return;
+        }
+
         try
         {
             IsBusy = true;
@@ -434,10 +460,29 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
             var serverConnection = _dbSettingsService.GetServerConnectionString(settings);
             var appConnection = _dbSettingsService.GetConnectionString(settings);
 
-            await _dbInitializer.EnsureDatabaseAsync(serverConnection, Database.Trim());
-            AddLog("Базу даних створено або вона вже існує.", WizardLogType.Success);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var databaseResult = await _dbInitializer.EnsureDatabaseAsync(serverConnection, Database.Trim(), cts.Token);
+            if (!databaseResult.Success)
+            {
+                _schemaInitialized = false;
+                SchemaVersion = 0;
+                Status = databaseResult.Message;
+                AddLog($"[{databaseResult.Code}] {databaseResult.Message}", WizardLogType.Error, databaseResult.DebugException);
+                return;
+            }
 
-            await _dbInitializer.EnsureSchemaAsync(appConnection);
+            AddLog(databaseResult.Message, WizardLogType.Success);
+
+            var schemaResult = await _dbInitializer.EnsureSchemaAsync(appConnection, cts.Token);
+            if (!schemaResult.Success)
+            {
+                _schemaInitialized = false;
+                SchemaVersion = 0;
+                Status = schemaResult.Message;
+                AddLog($"[{schemaResult.Code}] {schemaResult.Message}", WizardLogType.Error, schemaResult.DebugException);
+                return;
+            }
+
             SchemaVersion = await _dbInitializer.GetSchemaVersionAsync(appConnection);
             _schemaInitialized = SchemaVersion > 0;
 
@@ -454,8 +499,8 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         {
             _schemaInitialized = false;
             SchemaVersion = 0;
-            Status = BuildFriendlyDbError(ex);
-            AddLog($"Помилка ініціалізації: {Status}", WizardLogType.Error);
+            Status = "Не вдалося ініціалізувати схему бази даних.";
+            AddLog($"Помилка ініціалізації: {Status}", WizardLogType.Error, ex);
         }
         finally
         {
@@ -499,11 +544,19 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
 
     private async Task FinishAsync()
     {
-        await _dbSettingsService.SaveAsync(BuildSettings(true));
-        IsCompleted = true;
-        Status = "Налаштування завершено.";
-        AddLog("Налаштування збережено. Майстер завершено.", WizardLogType.Success);
-        RequestClose?.Invoke(this, true);
+        try
+        {
+            await _dbSettingsService.SaveAsync(BuildSettings(true));
+            IsCompleted = true;
+            Status = "Налаштування завершено.";
+            AddLog("Налаштування збережено. Майстер завершено.", WizardLogType.Success);
+            RequestClose?.Invoke(this, true);
+        }
+        catch (Exception ex)
+        {
+            Status = "Помилка збереження налаштувань. Перевірте доступ до профілю користувача Windows.";
+            AddLog(Status, WizardLogType.Error, ex);
+        }
     }
 
     private bool ValidateConnectionStep()
@@ -553,31 +606,32 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
         RefreshCommandStates();
     }
 
-    private void AddLog(string message, WizardLogType type)
+    private void AddLog(string message, WizardLogType type, Exception? debugException = null)
     {
-        Logs.Add(new WizardLogEntry(DateTime.Now, message, type));
+        Logs.Add(new WizardLogEntry(DateTime.Now, message, type, debugException));
     }
 
-    private string BuildFriendlyDbError(Exception ex)
+    private bool CanUsePublicKeyRetrieval()
     {
-        var message = ex.Message;
-        if (message.Contains("Access denied", StringComparison.OrdinalIgnoreCase))
+        if (!AllowPublicKeyRetrieval || UseSsl)
         {
-            return "Відмовлено в доступі. Перевірте логін, пароль і права користувача MySQL.";
+            return true;
         }
 
-        if (message.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("connect", StringComparison.OrdinalIgnoreCase))
+        var host = Host.Trim();
+        return string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetConnectionValidationMessage()
+    {
+        if (!int.TryParse(Port, out var parsedPort) || parsedPort is < 1 or > 65535)
         {
-            return "Неможливо підключитися до MySQL. Перевірте хост, порт і доступність сервера.";
+            return "Некоректний порт. Вкажіть число від 1 до 65535.";
         }
 
-        if (message.Contains("Unknown database", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Вказана база даних не існує. Створіть її на кроці 2.";
-        }
-
-        return $"Сталася помилка MySQL: {message}";
+        return "Виправте помилки у параметрах підключення.";
     }
 
     private void RefreshCommandStates()
@@ -591,7 +645,7 @@ public class SetupWizardViewModel : ViewModelBase, IDialogRequestClose
     }
 }
 
-public sealed record WizardLogEntry(DateTime Timestamp, string Message, WizardLogType Type)
+public sealed record WizardLogEntry(DateTime Timestamp, string Message, WizardLogType Type, Exception? DebugException = null)
 {
     public string TimeLabel => Timestamp.ToString("HH:mm:ss");
 }

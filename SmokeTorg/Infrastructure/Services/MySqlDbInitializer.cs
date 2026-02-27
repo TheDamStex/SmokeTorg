@@ -6,35 +6,91 @@ namespace SmokeTorg.Infrastructure.Services;
 
 public class MySqlDbInitializer : IDbInitializer
 {
-    public async Task TestConnectionAsync(string connectionString)
+    public async Task<OperationResult> TestConnectionAsync(string connectionString, CancellationToken cancellationToken = default)
     {
-        await using var connection = new MySqlConnection(connectionString);
-        await connection.OpenAsync();
-        await connection.CloseAsync();
-    }
-
-    public async Task EnsureDatabaseAsync(string serverConnectionString, string dbName)
-    {
-        await using var connection = new MySqlConnection(serverConnectionString);
-        await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
-        await command.ExecuteNonQueryAsync();
-    }
-
-    public async Task EnsureSchemaAsync(string connectionString)
-    {
-        await using var connection = new MySqlConnection(connectionString);
-        await connection.OpenAsync();
-
-        foreach (var sql in MySqlSchemaScripts.CreateTables)
+        try
         {
+            await using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync(cancellationToken);
+
             await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            await command.ExecuteNonQueryAsync();
+            command.CommandText = "SELECT 1;";
+            command.CommandTimeout = 10;
+            await command.ExecuteScalarAsync(cancellationToken);
+
+            return OperationResult.Ok("DB_CONNECTION_OK", "Підключення до MySQL успішне.");
+        }
+        catch (Exception ex)
+        {
+            return MapError(ex);
+        }
+    }
+
+    public async Task<OperationResult> EnsureDatabaseAsync(string serverConnectionString, string dbName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(dbName))
+        {
+            return OperationResult.Fail("DB_NAME_INVALID", "Некоректна назва бази даних.");
         }
 
-        await SetSchemaVersionAsync(connectionString, MySqlSchemaScripts.CurrentVersion);
+        var normalizedName = dbName.Trim().Replace("`", "``", StringComparison.Ordinal);
+
+        try
+        {
+            await using var connection = new MySqlConnection(serverConnectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{normalizedName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
+            command.CommandTimeout = 30;
+            await command.ExecuteNonQueryAsync(cancellationToken);
+
+            return OperationResult.Ok("DB_CREATED_OR_EXISTS", "Базу даних створено або вона вже існує.");
+        }
+        catch (Exception ex)
+        {
+            return MapError(ex, "Для створення бази потрібна привілея CREATE DATABASE.");
+        }
+    }
+
+    public async Task<OperationResult> EnsureSchemaAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            foreach (var sql in MySqlSchemaScripts.CreateTables)
+            {
+                await using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                command.CommandTimeout = 30;
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await using var schemaVersionCommand = connection.CreateCommand();
+            schemaVersionCommand.Transaction = transaction;
+            schemaVersionCommand.CommandText = """
+                INSERT INTO SchemaInfo (SchemaVersion, AppliedAt)
+                SELECT @version, @appliedAt
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM SchemaInfo WHERE SchemaVersion = @version
+                );
+                """;
+            schemaVersionCommand.Parameters.AddWithValue("@version", MySqlSchemaScripts.CurrentVersion);
+            schemaVersionCommand.Parameters.AddWithValue("@appliedAt", DateTime.UtcNow);
+            schemaVersionCommand.CommandTimeout = 30;
+            await schemaVersionCommand.ExecuteNonQueryAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return OperationResult.Ok("DB_SCHEMA_READY", "Схему бази даних успішно ініціалізовано.");
+        }
+        catch (Exception ex)
+        {
+            return MapError(ex, "Для створення таблиць потрібні привілеї CREATE, ALTER, INDEX.");
+        }
     }
 
     public async Task<int> GetSchemaVersionAsync(string connectionString)
@@ -42,7 +98,7 @@ public class MySqlDbInitializer : IDbInitializer
         await using var connection = new MySqlConnection(connectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT SchemaVersion FROM SchemaInfo ORDER BY Id DESC LIMIT 1;";
+        command.CommandText = "SELECT COALESCE(MAX(SchemaVersion), 0) FROM SchemaInfo;";
         var result = await command.ExecuteScalarAsync();
         return result is null ? 0 : Convert.ToInt32(result);
     }
@@ -56,5 +112,37 @@ public class MySqlDbInitializer : IDbInitializer
         command.Parameters.AddWithValue("@version", version);
         command.Parameters.AddWithValue("@appliedAt", DateTime.UtcNow);
         await command.ExecuteNonQueryAsync();
+    }
+
+    private static OperationResult MapError(Exception exception, string? permissionHint = null)
+    {
+        if (exception is MySqlException mysqlException)
+        {
+            return mysqlException.ErrorCode switch
+            {
+                MySqlErrorCode.AccessDenied => OperationResult.Fail("DB_AUTH_FAILED", "Невірний логін або пароль.", mysqlException),
+                MySqlErrorCode.BadDbError => OperationResult.Fail("DB_NOT_FOUND", "База даних не існує. Її можна створити на наступному кроці.", mysqlException),
+                MySqlErrorCode.DbAccessDenied or MySqlErrorCode.TableAccessDeniedError => OperationResult.Fail(
+                    "DB_PERMISSION_DENIED",
+                    permissionHint ?? "Недостатньо прав для виконання операції в MySQL.",
+                    mysqlException),
+                MySqlErrorCode.UnableToConnectToHost => OperationResult.Fail("DB_HOST_UNREACHABLE", "Немає доступу до MySQL-сервера. Перевірте хост, порт і firewall.", mysqlException),
+                MySqlErrorCode.BadFieldError => OperationResult.Fail("DB_SCHEMA_MISMATCH", "Виявлено несумісність схеми бази даних.", mysqlException),
+                _ when mysqlException.Message.Contains("SSL", StringComparison.OrdinalIgnoreCase)
+                    => OperationResult.Fail("DB_SSL_ERROR", "Помилка SSL-підключення. Перевірте режим SSL та сертифікати.", mysqlException),
+                _ when mysqlException.Message.Contains("Public Key Retrieval", StringComparison.OrdinalIgnoreCase)
+                    => OperationResult.Fail("DB_PUBLIC_KEY_RETRIEVAL", "Сервер вимагає AllowPublicKeyRetrieval. Увімкніть лише для локального підключення без SSL.", mysqlException),
+                _ when mysqlException.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                    => OperationResult.Fail("DB_TIMEOUT", "Час очікування MySQL вичерпано. Перевірте доступність сервера.", mysqlException),
+                _ => OperationResult.Fail("DB_UNKNOWN_ERROR", "Сталася невідома помилка MySQL.", mysqlException)
+            };
+        }
+
+        if (exception is OperationCanceledException)
+        {
+            return OperationResult.Fail("DB_OPERATION_CANCELED", "Операцію скасовано через таймаут або запит користувача.", exception);
+        }
+
+        return OperationResult.Fail("DB_GENERAL_ERROR", "Сталася помилка під час роботи з базою даних.", exception);
     }
 }
