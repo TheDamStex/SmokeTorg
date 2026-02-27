@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using MySqlConnector;
+using System.IO;
 using SmokeTorg.Application.Interfaces;
 
 namespace SmokeTorg.Infrastructure.Services;
