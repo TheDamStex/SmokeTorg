@@ -30,7 +30,31 @@ public class JsonCategoryRepository(IStorageProvider storage) : JsonRepositoryBa
 public class JsonSupplierRepository(IStorageProvider storage) : JsonRepositoryBase<Supplier>(storage, "suppliers.json"), ISupplierRepository;
 public class JsonCustomerRepository(IStorageProvider storage) : JsonRepositoryBase<Customer>(storage, "customers.json"), ICustomerRepository;
 public class JsonSaleRepository(IStorageProvider storage) : JsonRepositoryBase<Sale>(storage, "sales.json"), ISaleRepository;
-public class JsonPurchaseRepository(IStorageProvider storage) : JsonRepositoryBase<Purchase>(storage, "purchases.json"), IPurchaseRepository;
+public class JsonPurchaseRepository(IStorageProvider storage) : JsonRepositoryBase<Purchase>(storage, "purchases.json"), IPurchaseRepository
+{
+    public async Task<string> GetNextNumberAsync(DateTime date)
+    {
+        var prefix = $"ПН-{date:yyyyMMdd}-";
+        var all = await GetAllAsync();
+        var lastNumber = all
+            .Where(x => !string.IsNullOrWhiteSpace(x.Number) && x.Number.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Number)
+            .OrderByDescending(x => x)
+            .FirstOrDefault();
+
+        var sequence = 1;
+        if (!string.IsNullOrWhiteSpace(lastNumber))
+        {
+            var sequencePart = lastNumber[prefix.Length..];
+            if (int.TryParse(sequencePart, out var currentSequence))
+            {
+                sequence = currentSequence + 1;
+            }
+        }
+
+        return $"{prefix}{sequence:0000}";
+    }
+}
 public class JsonSettingsRepository(IStorageProvider storage) : JsonRepositoryBase<AppSettings>(storage, "settings.json"), ISettingsRepository;
 
 public class JsonUserRepository(IStorageProvider storage) : JsonRepositoryBase<User>(storage, "users.json"), IUserRepository

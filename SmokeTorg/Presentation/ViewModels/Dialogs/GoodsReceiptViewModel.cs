@@ -16,6 +16,7 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
     private readonly PurchaseService _purchaseService;
     private readonly IDialogService _dialogService;
 
+    private Purchase? _purchase;
     private Supplier? _selectedSupplier;
     private Product? _selectedSearchProduct;
     private string _productSearchText = string.Empty;
@@ -32,14 +33,15 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
         _purchaseService = purchaseService;
         _dialogService = dialogService;
 
-        SearchProductCommand = new AsyncRelayCommand(async _ => await SearchProductAsync());
-        AddByBarcodeCommand = new AsyncRelayCommand(async _ => await AddByBarcodeAsync());
-        AddProductCommand = new RelayCommand(AddProductFromParameter);
-        RemoveItemCommand = new RelayCommand(RemoveItem);
+        SearchProductCommand = new AsyncRelayCommand(async _ => await SearchProductAsync(), _ => !IsReadOnly);
+        AddByBarcodeCommand = new AsyncRelayCommand(async _ => await AddByBarcodeAsync(), _ => !IsReadOnly);
+        AddProductCommand = new RelayCommand(AddProductFromParameter, _ => !IsReadOnly);
+        RemoveItemCommand = new RelayCommand(RemoveItem, _ => !IsReadOnly);
         SaveDraftCommand = new AsyncRelayCommand(async _ => await SaveDraftAsync(), _ => CanSaveDraft());
         PostCommand = new AsyncRelayCommand(async _ => await PostAsync(), _ => CanPost());
-        CancelCommand = new RelayCommand(_ => RequestClose?.Invoke(this, false));
-        AddSupplierCommand = new AsyncRelayCommand(OpenCreateSupplierDialogAsync);
+        CancelReceiptCommand = new AsyncRelayCommand(async _ => await CancelReceiptAsync(), _ => CanCancel());
+        CloseCommand = new RelayCommand(_ => RequestClose?.Invoke(this, false));
+        AddSupplierCommand = new AsyncRelayCommand(OpenCreateSupplierDialogAsync, _ => !IsReadOnly);
 
         Items.CollectionChanged += (_, _) => OnItemsChanged();
     }
@@ -48,13 +50,22 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
     public ObservableCollection<ReceiptLineItem> Items { get; } = [];
     public ObservableCollection<Product> ProductSearchResults { get; } = [];
 
+    public string Number => _purchase?.Number ?? string.Empty;
+    public DateTime ReceiptDate => _purchase?.ReceiptDate ?? DateTime.Now;
+    public string CreatedByLogin => _purchase?.CreatedByLogin ?? string.Empty;
+    public string AcceptedByLogin => _purchase?.AcceptedByLogin ?? string.Empty;
+    public DocumentStatus Status => _purchase?.Status ?? DocumentStatus.Draft;
+    public bool IsReadOnly => Status is DocumentStatus.Posted or DocumentStatus.Cancelled;
+
     public Supplier? SelectedSupplier
     {
         get => _selectedSupplier;
         set
         {
-            if (SetProperty(ref _selectedSupplier, value))
+            if (SetProperty(ref _selectedSupplier, value) && _purchase is not null && value is not null)
             {
+                _purchase.SupplierId = value.Id;
+                _purchase.SupplierName = value.Name;
                 RevalidateCommands();
             }
         }
@@ -72,59 +83,49 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
     public RelayCommand RemoveItemCommand { get; }
     public AsyncRelayCommand SaveDraftCommand { get; }
     public AsyncRelayCommand PostCommand { get; }
-    public RelayCommand CancelCommand { get; }
+    public AsyncRelayCommand CancelReceiptCommand { get; }
+    public RelayCommand CloseCommand { get; }
     public AsyncRelayCommand AddSupplierCommand { get; }
 
     public event EventHandler<bool?>? RequestClose;
 
-    public async Task InitializeAsync()
+    public async Task InitializeForPurchaseAsync(Purchase purchase)
     {
+        _purchase = purchase;
         await ReloadSuppliers();
-        SelectedSupplier ??= Suppliers.FirstOrDefault();
-        ValidateAll();
-        RevalidateCommands();
-    }
+        SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == purchase.SupplierId);
 
-    protected override void ValidateProperty(string propertyName)
-    {
-        ClearErrors(propertyName);
-
-        switch (propertyName)
+        Items.Clear();
+        foreach (var item in purchase.Items)
         {
-            case nameof(SelectedSupplier):
-                if (SelectedSupplier is null)
-                {
-                    AddError(nameof(SelectedSupplier), "Поле обов’язкове");
-                }
-                break;
-
-            case nameof(Items):
-                if (Items.Count == 0)
-                {
-                    AddError(nameof(Items), "Додайте хоча б одну позицію");
-                }
-                else if (Items.Any(x => x.Quantity <= 0 || x.PurchasePrice < 0))
-                {
-                    AddError(nameof(Items), "Перевірте кількість та ціну в позиціях");
-                }
-                break;
+            var line = new ReceiptLineItem
+            {
+                ProductId = item.ProductId,
+                ProductName = item.ProductName,
+                Barcode = item.BarcodeDisplay,
+                Quantity = item.Quantity,
+                PurchasePrice = item.Price
+            };
+            line.PropertyChanged += ItemOnPropertyChanged;
+            Items.Add(line);
         }
+
+        OnPropertyChanged(nameof(Number));
+        OnPropertyChanged(nameof(ReceiptDate));
+        OnPropertyChanged(nameof(CreatedByLogin));
+        OnPropertyChanged(nameof(AcceptedByLogin));
+        OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnItemsChanged();
     }
 
-    protected override void OnErrorsChanged(string propertyName)
-    {
-        RevalidateCommands();
-    }
-
-    public async Task ReloadSuppliers()
+    private async Task ReloadSuppliers()
     {
         Suppliers.Clear();
-        foreach (var supplier in await _supplierService.GetAllAsync()) Suppliers.Add(supplier);
-    }
-
-    public void SelectCreatedSupplier(Supplier createdSupplier)
-    {
-        SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == createdSupplier.Id);
+        foreach (var supplier in await _supplierService.GetAllAsync())
+        {
+            Suppliers.Add(supplier);
+        }
     }
 
     private async Task SearchProductAsync()
@@ -171,32 +172,29 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
 
     private async Task SaveDraftAsync()
     {
-        ValidateProperty(nameof(Items));
-        if (!CanSaveDraft())
-        {
-            MessageBox.Show("Виправте помилки у формі.", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        var purchase = BuildPurchase(DocumentStatus.Draft);
-        await _purchaseService.SaveAsync(purchase);
-        MessageBox.Show("Чернетку приходу збережено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+        if (_purchase is null) return;
+        ApplyItemsToPurchase();
+        await _purchaseService.SaveDraftAsync(_purchase);
+        MessageBox.Show("Чернетку накладної збережено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+        RequestClose?.Invoke(this, true);
     }
 
     private async Task PostAsync()
     {
-        ValidateAll();
-        if (HasErrors)
-        {
-            MessageBox.Show("Виправте помилки у формі.", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+        if (_purchase is null) return;
+        ApplyItemsToPurchase();
+        await _purchaseService.SaveDraftAsync(_purchase);
+        await _purchaseService.PostAsync(_purchase.Id);
 
-        var purchase = BuildPurchase(DocumentStatus.Draft);
-        await _purchaseService.SaveAsync(purchase);
-        await _purchaseService.PostAsync(purchase);
+        MessageBox.Show("Накладну проведено та залишки оновлено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+        RequestClose?.Invoke(this, true);
+    }
 
-        MessageBox.Show("Документ приходу проведено та залишки оновлено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+    private async Task CancelReceiptAsync()
+    {
+        if (_purchase is null) return;
+        await _purchaseService.CancelAsync(_purchase.Id);
+        MessageBox.Show("Накладну скасовано.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
         RequestClose?.Invoke(this, true);
     }
 
@@ -206,28 +204,32 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
         if (_dialogService.ShowDialog(vm) == true && vm.CreatedSupplier is not null)
         {
             await ReloadSuppliers();
-            SelectCreatedSupplier(vm.CreatedSupplier);
+            SelectedSupplier = Suppliers.FirstOrDefault(x => x.Id == vm.CreatedSupplier.Id);
         }
     }
 
-    private bool CanSaveDraft() => Items.Count > 0 && Items.All(i => i.Quantity > 0);
+    private bool CanSaveDraft() => !IsReadOnly && _purchase is not null && SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0);
 
-    private bool CanPost() => !HasErrors && SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0 && i.PurchasePrice >= 0);
+    private bool CanPost() => !IsReadOnly && _purchase is not null && SelectedSupplier is not null && Items.Count > 0 && Items.All(i => i.Quantity > 0 && i.PurchasePrice >= 0);
 
-    private Purchase BuildPurchase(DocumentStatus status) => new()
+    private bool CanCancel() => _purchase is not null && Status == DocumentStatus.Draft;
+
+    private void ApplyItemsToPurchase()
     {
-        SupplierId = SelectedSupplier?.Id ?? Guid.Empty,
-        Date = DateTime.Now,
-        Status = status,
-        Items = Items.Select(i => new PurchaseItem
+        if (_purchase is null || SelectedSupplier is null) return;
+
+        _purchase.SupplierId = SelectedSupplier.Id;
+        _purchase.SupplierName = SelectedSupplier.Name;
+        _purchase.ReceiptDate = DateTime.Now;
+        _purchase.Items = Items.Select(i => new PurchaseItem
         {
             ProductId = i.ProductId,
             ProductName = i.ProductName,
             BarcodeDisplay = i.Barcode,
             Quantity = i.Quantity,
             Price = i.PurchasePrice
-        }).ToList()
-    };
+        }).ToList();
+    }
 
     private void AddProduct(Product product)
     {
@@ -264,14 +266,19 @@ public class GoodsReceiptViewModel : ViewModelBase, IDialogRequestClose
     private void OnItemsChanged()
     {
         OnPropertyChanged(nameof(Total));
-        ValidateProperty(nameof(Items));
         RevalidateCommands();
     }
 
     private void RevalidateCommands()
     {
+        SearchProductCommand.RaiseCanExecuteChanged();
+        AddByBarcodeCommand.RaiseCanExecuteChanged();
+        AddProductCommand.RaiseCanExecuteChanged();
+        RemoveItemCommand.RaiseCanExecuteChanged();
         SaveDraftCommand.RaiseCanExecuteChanged();
         PostCommand.RaiseCanExecuteChanged();
+        CancelReceiptCommand.RaiseCanExecuteChanged();
+        AddSupplierCommand.RaiseCanExecuteChanged();
     }
 }
 
