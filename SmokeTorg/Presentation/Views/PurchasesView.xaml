@@ -58,7 +58,6 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#EEF2F6"/>
-            <Setter Property="VerticalGridLinesVisibility" Value="None"/>
             <Setter Property="RowHeight" Value="46"/>
             <Setter Property="ColumnHeaderHeight" Value="44"/>
             <Setter Property="FontSize" Value="14"/>
