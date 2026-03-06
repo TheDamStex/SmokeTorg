@@ -248,7 +248,7 @@ public class MainViewModel : ViewModelBase
         }
 
         var window = (DbSettingsWindow)_serviceProvider.GetService(typeof(DbSettingsWindow))!;
-        window.Owner = Application.Current.MainWindow;
+        window.Owner = System.Windows.Application.Current.MainWindow;
         window.ShowDialog();
     }
 
@@ -261,7 +261,7 @@ public class MainViewModel : ViewModelBase
         }
 
         var window = (UserManagementWindow)_serviceProvider.GetService(typeof(UserManagementWindow))!;
-        window.Owner = Application.Current.MainWindow;
+        window.Owner = System.Windows.Application.Current.MainWindow;
         window.ShowDialog();
     }
 
@@ -276,7 +276,7 @@ public class MainViewModel : ViewModelBase
         _authService.Logout();
         RefreshCurrentUserState();
 
-        var application = Application.Current;
+        var application = System.Windows.Application.Current;
         application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         var currentMainWindow = application.MainWindow;
