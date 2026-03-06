@@ -1,6 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Windows;
+using SmokeTorg.Application.Services;
+using SmokeTorg;
 using SmokeTorg.Common.Base;
 using SmokeTorg.Common.Commands;
+using SmokeTorg.Common.Converters;
 using SmokeTorg.Domain.Enums;
 using SmokeTorg.Presentation.Models;
 using SmokeTorg.Presentation.Services;
@@ -21,8 +25,14 @@ public class MainViewModel : ViewModelBase
     private readonly PosWindowViewModel _posWindowViewModel;
     private readonly StockViewModel _stockViewModel;
     private readonly IServiceProvider _serviceProvider;
+    private readonly AuthService _authService;
     private object? _currentViewModel;
     private bool _isHomeView = true;
+    private bool _isAuthenticated;
+    private string _currentUserLogin = string.Empty;
+    private string _currentUserRoleDisplay = string.Empty;
+    private string _currentUserFullName = string.Empty;
+    private string _accessStatus = "Гостьовий доступ";
 
     public MainViewModel(
         LoginViewModel loginVm,
@@ -34,7 +44,8 @@ public class MainViewModel : ViewModelBase
         GoodsReceiptViewModel goodsReceiptViewModel,
         PosWindowViewModel posWindowViewModel,
         StockViewModel stockViewModel,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        AuthService authService)
     {
         _loginVm = loginVm;
         _posVm = posVm;
@@ -46,16 +57,15 @@ public class MainViewModel : ViewModelBase
         _posWindowViewModel = posWindowViewModel;
         _stockViewModel = stockViewModel;
         _serviceProvider = serviceProvider;
+        _authService = authService;
 
         AppTitle = "SmokeTorg";
         StoreName = "Магазин: Central Store";
         DbName = "БД: SmokeTorgDb";
-        UserName = "owner";
-        Role = "Владелец";
-        LicenseInfo = "Лицензия: ST-2026-001";
+        LicenseInfo = "Ліцензія: ST-2026-001";
         DateInfo = $"{DateTime.Now:dd.MM.yyyy} ({DateTime.Now:dddd})";
-        DbInfo = "Версия: 1.0.0";
-        ModeInfo = "Режим: Терминал";
+        DbInfo = "Версія: 1.0.0";
+        ModeInfo = "Режим: Термінал";
 
         News = new ObservableCollection<NewsItem>
         {
@@ -74,12 +84,13 @@ public class MainViewModel : ViewModelBase
         };
 
         NavigateCommand = new RelayCommand(Navigate);
-        LoginCommand = new AsyncRelayCommand(async _ => await DoLoginAsync());
+        LoginCommand = new AsyncRelayCommand(async _ => await DoLoginAsync(), _ => !IsAuthenticated);
+        LogoutCommand = new AsyncRelayCommand(async _ => await DoLogoutAsync(), _ => IsAuthenticated);
 
         OpenPOSCommand = new RelayCommand(_ => OpenModule(_posVm));
         OpenProductsCommand = new RelayCommand(_ => OpenModule(_productsVm));
         OpenPurchasesCommand = new RelayCommand(_ => OpenModule(_purchasesVm));
-        OpenReportsCommand = new RelayCommand(_ => OpenPlaceholder("Отчеты"));
+        OpenReportsCommand = new RelayCommand(_ => OpenPlaceholder("Звіти"));
         OpenSettingsCommand = new RelayCommand(_ => OpenDbSettings());
         OpenUserManagementCommand = new RelayCommand(_ => OpenUserManagement());
         OpenPlaceholderCommand = new RelayCommand(p => OpenPlaceholder(p?.ToString() ?? "Модуль"));
@@ -98,6 +109,7 @@ public class MainViewModel : ViewModelBase
             _dialogService.ShowDialog(_stockViewModel);
         });
 
+        RefreshCurrentUserState();
     }
 
     public object? CurrentViewModel { get => _currentViewModel; set => SetProperty(ref _currentViewModel, value); }
@@ -106,20 +118,54 @@ public class MainViewModel : ViewModelBase
     public string AppTitle { get; }
     public string StoreName { get; }
     public string DbName { get; }
-    public string UserName { get; private set; }
-    public string Role { get; private set; }
     public string LicenseInfo { get; }
     public string DbInfo { get; }
     public string DateInfo { get; }
     public string ModeInfo { get; }
     public ObservableCollection<NewsItem> News { get; }
 
-    public string CurrentUserInfo => _loginVm.CurrentSession is null ? "Гість" : $"{_loginVm.CurrentSession.Username} ({_loginVm.CurrentSession.Role})";
-    public bool IsAdmin => _loginVm.CurrentSession?.Role == UserRole.Admin;
-    public bool CanManageCatalog => _loginVm.CurrentSession?.Role is UserRole.Admin or UserRole.Manager;
+    public bool IsAuthenticated
+    {
+        get => _isAuthenticated;
+        private set => SetProperty(ref _isAuthenticated, value);
+    }
+
+    public bool IsNotAuthenticated => !IsAuthenticated;
+
+    public string CurrentUserLogin
+    {
+        get => _currentUserLogin;
+        private set => SetProperty(ref _currentUserLogin, value);
+    }
+
+    public string CurrentUserRoleDisplay
+    {
+        get => _currentUserRoleDisplay;
+        private set => SetProperty(ref _currentUserRoleDisplay, value);
+    }
+
+    public string CurrentUserFullName
+    {
+        get => _currentUserFullName;
+        private set => SetProperty(ref _currentUserFullName, value);
+    }
+
+    public string AccessStatus
+    {
+        get => _accessStatus;
+        private set => SetProperty(ref _accessStatus, value);
+    }
+
+    public string CurrentUserInfo => IsAuthenticated
+        ? $"{CurrentUserLogin} | {CurrentUserRoleDisplay}"
+        : "Гість";
+
+    public bool IsAdmin => _authService.CurrentSession?.Role == UserRole.Admin;
+    public bool CanManageCatalog => _authService.CurrentSession?.Role is UserRole.Admin or UserRole.Manager;
 
     public RelayCommand NavigateCommand { get; }
     public AsyncRelayCommand LoginCommand { get; }
+    public AsyncRelayCommand LogoutCommand { get; }
     public RelayCommand OpenPOSCommand { get; }
     public RelayCommand OpenProductsCommand { get; }
     public RelayCommand OpenPurchasesCommand { get; }
@@ -131,6 +177,27 @@ public class MainViewModel : ViewModelBase
     public AsyncRelayCommand OpenGoodsReceiptCommand { get; }
     public RelayCommand OpenPosCommand { get; }
     public AsyncRelayCommand OpenStockCommand { get; }
+
+    public void RefreshCurrentUserState()
+    {
+        var session = _authService.CurrentSession;
+
+        IsAuthenticated = session is not null;
+        CurrentUserLogin = session?.Username ?? string.Empty;
+        CurrentUserRoleDisplay = session is null
+            ? string.Empty
+            : RoleToUkrainianConverter.ToDisplay(session.Role);
+        CurrentUserFullName = session?.FullName ?? string.Empty;
+        AccessStatus = session?.IsActive == true ? "Доступ активний" : "Немає активної сесії";
+
+        OnPropertyChanged(nameof(IsNotAuthenticated));
+        OnPropertyChanged(nameof(CurrentUserInfo));
+        OnPropertyChanged(nameof(IsAdmin));
+        OnPropertyChanged(nameof(CanManageCatalog));
+
+        LoginCommand.RaiseCanExecuteChanged();
+        LogoutCommand.RaiseCanExecuteChanged();
+    }
 
     private void Navigate(object? p)
     {
@@ -172,17 +239,16 @@ public class MainViewModel : ViewModelBase
         IsHomeView = true;
     }
 
-
     private void OpenDbSettings()
     {
         if (!IsAdmin)
         {
-            System.Windows.MessageBox.Show("Недостатньо прав доступу");
+            MessageBox.Show("Недостатньо прав доступу");
             return;
         }
 
         var window = (DbSettingsWindow)_serviceProvider.GetService(typeof(DbSettingsWindow))!;
-        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.Owner = Application.Current.MainWindow;
         window.ShowDialog();
     }
 
@@ -190,30 +256,68 @@ public class MainViewModel : ViewModelBase
     {
         if (!IsAdmin)
         {
-            System.Windows.MessageBox.Show("Недостатньо прав доступу");
+            MessageBox.Show("Недостатньо прав доступу");
             return;
         }
 
         var window = (UserManagementWindow)_serviceProvider.GetService(typeof(UserManagementWindow))!;
-        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.Owner = Application.Current.MainWindow;
         window.ShowDialog();
     }
+
     private async Task DoLoginAsync()
     {
         await _loginVm.LoginAsync();
-        UserName = _loginVm.CurrentSession?.Username ?? "owner";
-        Role = _loginVm.CurrentSession?.Role switch
+        RefreshCurrentUserState();
+    }
+
+    private async Task DoLogoutAsync()
+    {
+        _authService.Logout();
+        RefreshCurrentUserState();
+
+        var application = Application.Current;
+        application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        var currentMainWindow = application.MainWindow;
+        currentMainWindow?.Close();
+
+        var loginWindow = (LoginWindow)_serviceProvider.GetService(typeof(LoginWindow))!;
+        var loginVm = (LoginViewModel)_serviceProvider.GetService(typeof(LoginViewModel))!;
+
+        loginVm.Username = string.Empty;
+        loginVm.Password = string.Empty;
+        loginWindow.DataContext = loginVm;
+
+        EventHandler<bool?>? loginRequestClose = null;
+        loginRequestClose = (_, dialogResult) =>
         {
-            UserRole.Admin => "Администратор",
-            UserRole.Manager => "Менеджер",
-            UserRole.Cashier => "Касир",
-            _ => "Владелец"
+            loginVm.RequestClose -= loginRequestClose;
+
+            if (dialogResult != true)
+            {
+                loginWindow.Close();
+                application.Shutdown();
+                return;
+            }
+
+            var mainWindow = (MainWindow)_serviceProvider.GetService(typeof(MainWindow))!;
+            if (mainWindow.DataContext is MainViewModel mainVm)
+            {
+                mainVm.RefreshCurrentUserState();
+            }
+
+            application.MainWindow = mainWindow;
+            application.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            mainWindow.Show();
+            loginWindow.Close();
         };
 
-        OnPropertyChanged(nameof(UserName));
-        OnPropertyChanged(nameof(Role));
-        OnPropertyChanged(nameof(CurrentUserInfo));
-        OnPropertyChanged(nameof(IsAdmin));
-        OnPropertyChanged(nameof(CanManageCatalog));
+        loginVm.RequestClose += loginRequestClose;
+        application.MainWindow = loginWindow;
+        application.ShutdownMode = ShutdownMode.OnMainWindowClose;
+        loginWindow.Show();
+
+        await Task.CompletedTask;
     }
 }
