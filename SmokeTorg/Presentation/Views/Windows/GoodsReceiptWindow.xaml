@@ -37,7 +37,7 @@
                 <TextBlock Grid.Column="2" Text="Дата" FontWeight="SemiBold"/>
                 <TextBox Grid.Column="3" Text="{Binding ReceiptDate, Mode=OneWay, StringFormat={}{0:dd.MM.yyyy HH:mm}}" IsReadOnly="True" Margin="6,0,12,8"/>
                 <TextBlock Grid.Column="4" Text="Статус" FontWeight="SemiBold"/>
-                <TextBox Grid.Column="5" Text="{Binding Status}" IsReadOnly="True" Margin="6,0,0,8"/>
+                <TextBox Grid.Column="5" Text="{Binding Status, Mode=OneWay}" IsReadOnly="True" Margin="6,0,0,8"/>
 
                 <TextBlock Grid.Row="1" Text="Постачальник" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
@@ -47,10 +47,10 @@
                           IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"
                           Margin="6,0,12,0"/>
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="Створив" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding CreatedByLogin}" IsReadOnly="True" Margin="6,0,12,0"/>
+                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding CreatedByLogin, Mode=OneWay}" IsReadOnly="True" Margin="6,0,12,0"/>
                 <StackPanel Grid.Row="1" Grid.Column="5">
                     <TextBlock Text="Приймає" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding AcceptedByLogin}" IsReadOnly="True"/>
+                    <TextBox Text="{Binding AcceptedByLogin, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -88,7 +88,7 @@
                     <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
                     <DataGridTextColumn Header="К-сть" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
                     <DataGridTextColumn Header="Ціна закупівлі" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
-                    <DataGridTextColumn Header="Сума" Binding="{Binding Sum}" Width="130" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Сума" Binding="{Binding Sum, Mode=OneWay}" Width="130" IsReadOnly="True"/>
                     <DataGridTemplateColumn Header="" Width="90">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
