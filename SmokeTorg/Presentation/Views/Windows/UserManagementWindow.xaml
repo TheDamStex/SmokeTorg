@@ -1,29 +1,252 @@
 <Window x:Class="SmokeTorg.Presentation.Views.Windows.UserManagementWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Керування користувачами" Height="520" Width="900" WindowStartupLocation="CenterOwner">
-    <Grid Margin="12">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <DataGrid Grid.Column="0" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Логін" Binding="{Binding Username}"/>
-                <DataGridTextColumn Header="Роль" Binding="{Binding Role}"/>
-                <DataGridCheckBoxColumn Header="Активний" Binding="{Binding IsActive}"/>
-                <DataGridTextColumn Header="ПІБ" Binding="{Binding FullName}"/>
-            </DataGrid.Columns>
-        </DataGrid>
-        <StackPanel Grid.Column="1" Margin="12,0,0,0">
-            <TextBlock Text="Створити користувача" FontSize="16" FontWeight="SemiBold"/>
-            <TextBlock Text="Логін"/><TextBox Text="{Binding NewUsername}"/>
-            <TextBlock Text="Пароль"/><TextBox Text="{Binding NewPassword}"/>
-            <TextBlock Text="ПІБ"/><TextBox Text="{Binding NewFullName}"/>
-            <TextBlock Text="Роль"/>
-            <ComboBox ItemsSource="{Binding Roles}" SelectedItem="{Binding NewRole}"/>
-            <Button Content="Створити" Command="{Binding CreateUserCommand}" Margin="0,8,0,0"/>
-            <Button Content="Активувати/деактивувати" Command="{Binding ToggleActiveCommand}" Margin="0,8,0,0"/>
-            <Button Content="Скинути пароль" Command="{Binding ResetPasswordCommand}" Margin="0,8,0,0"/>
-            <Button Content="Оновити" Command="{Binding LoadCommand}" Margin="0,8,0,0"/>
-            <TextBlock Text="{Binding Status}" Foreground="DarkBlue" Margin="0,10,0,0" TextWrapping="Wrap"/>
-        </StackPanel>
+        xmlns:converters="clr-namespace:SmokeTorg.Common.Converters"
+        xmlns:enums="clr-namespace:SmokeTorg.Domain.Enums"
+        Title="Керування користувачами"
+        Height="620"
+        Width="1180"
+        MinHeight="560"
+        MinWidth="980"
+        Background="#F7F8FA"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <converters:RoleToUkrainianConverter x:Key="RoleToUkrainianConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="CardContainerStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.08" Color="#000000" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <Style x:Key="FieldInputStyle" TargetType="Control">
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="MinHeight" Value="38" />
+        </Style>
+
+        <Style x:Key="ValidationTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#DC2626" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,3,0,10" />
+        </Style>
+
+        <Style x:Key="ModernDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9" />
+            <Setter Property="VerticalGridLinesBrush" Value="#F1F5F9" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="CanUserSortColumns" Value="True" />
+            <Setter Property="RowHeight" Value="42" />
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F3F4F6" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#F3F4F6" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF3E6" />
+                    <Setter Property="Foreground" Value="#111827" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DisabledAwarePrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.55" />
+                    <Setter Property="Cursor" Value="Arrow" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DisabledAwareSecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.55" />
+                    <Setter Property="Cursor" Value="Arrow" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2.2*" />
+            <ColumnDefinition Width="1.3*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Style="{StaticResource CardContainerStyle}" Margin="0,0,14,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Користувачі" FontSize="22" FontWeight="SemiBold" Foreground="#111827" />
+
+                <Grid Grid.Row="1" Margin="0,16,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="240" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             Margin="0,0,12,0"
+                             Padding="10,8"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Пошук за логіном або ПІБ" />
+
+                    <ComboBox Grid.Column="1"
+                              Padding="8,6"
+                              SelectedValuePath="Tag"
+                              SelectedValue="{Binding RoleFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ComboBoxItem Content="Усі ролі" Tag="{x:Null}" />
+                        <ComboBoxItem Content="Адміністратор" Tag="{x:Static enums:UserRole.Admin}" />
+                        <ComboBoxItem Content="Керівник" Tag="{x:Static enums:UserRole.Manager}" />
+                        <ComboBoxItem Content="Продавець" Tag="{x:Static enums:UserRole.Seller}" />
+                        <ComboBoxItem Content="Продавець" Tag="{x:Static enums:UserRole.Cashier}" />
+                    </ComboBox>
+                </Grid>
+
+                <DataGrid Grid.Row="2"
+                          Style="{StaticResource ModernDataGridStyle}"
+                          ItemsSource="{Binding Users}"
+                          SelectedItem="{Binding SelectedUser}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Логін" Binding="{Binding Username}" SortMemberPath="Username" Width="*" />
+                        <DataGridTextColumn Header="Роль" Binding="{Binding Role, Converter={StaticResource RoleToUkrainianConverter}}" SortMemberPath="Role" Width="1.1*" />
+                        <DataGridCheckBoxColumn Header="Активний" Binding="{Binding IsActive}" SortMemberPath="IsActive" Width="0.8*" />
+                        <DataGridTextColumn Header="ПІБ" Binding="{Binding FullName}" SortMemberPath="FullName" Width="1.6*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Style="{StaticResource CardContainerStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Створити / редагувати користувача"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="#111827"
+                               Margin="0,0,0,18" />
+
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="Логін" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="LoginTextBox"
+                                 Style="{StaticResource FieldInputStyle}"
+                                 Padding="10,8"
+                                 Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource ValidationTextStyle}"
+                                   Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=LoginTextBox}"
+                                   Visibility="{Binding (Validation.HasError), ElementName=LoginTextBox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <TextBlock Text="Пароль" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="PasswordTextBox"
+                                 Style="{StaticResource FieldInputStyle}"
+                                 Padding="10,8"
+                                 Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource ValidationTextStyle}"
+                                   Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=PasswordTextBox}"
+                                   Visibility="{Binding (Validation.HasError), ElementName=PasswordTextBox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <TextBlock Text="ПІБ" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="FullNameTextBox"
+                                 Style="{StaticResource FieldInputStyle}"
+                                 Padding="10,8"
+                                 Text="{Binding NewFullName, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource ValidationTextStyle}"
+                                   Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=FullNameTextBox}"
+                                   Visibility="{Binding (Validation.HasError), ElementName=FullNameTextBox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <TextBlock Text="Роль" Style="{StaticResource FieldLabelStyle}" />
+                        <ComboBox Style="{StaticResource FieldInputStyle}"
+                                  Padding="8,6"
+                                  ItemsSource="{Binding Roles}"
+                                  SelectedItem="{Binding NewRole}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource RoleToUkrainianConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <TextBlock Text="Активний" Style="{StaticResource FieldLabelStyle}" Margin="0,10,0,6" />
+                        <CheckBox IsEnabled="False"
+                                  IsChecked="{Binding SelectedUser.IsActive}"
+                                  Content="Стан обраного користувача"
+                                  Margin="0,0,0,14" />
+
+                        <TextBlock Text="Роль (редагування обраного користувача)" Style="{StaticResource FieldLabelStyle}" />
+                        <ComboBox Style="{StaticResource FieldInputStyle}"
+                                  Padding="8,6"
+                                  ItemsSource="{Binding Roles}"
+                                  SelectedItem="{Binding EditRole}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource RoleToUkrainianConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Margin="0,18,0,0">
+                        <Button Content="Створити" Style="{StaticResource DisabledAwarePrimaryButtonStyle}" Command="{Binding CreateUserCommand}" Margin="0,0,0,8" />
+                        <Button Content="Зберегти зміни" Style="{StaticResource DisabledAwareSecondaryButtonStyle}" Command="{Binding SaveChangesCommand}" Margin="0,0,0,8" />
+                        <Button Content="Активувати / деактивувати" Style="{StaticResource DisabledAwareSecondaryButtonStyle}" Command="{Binding ToggleActiveCommand}" Margin="0,0,0,8" />
+                        <Button Content="Скинути пароль" Style="{StaticResource DisabledAwareSecondaryButtonStyle}" Command="{Binding ResetPasswordCommand}" Margin="0,0,0,8" />
+                        <Button Content="Оновити" Style="{StaticResource DisabledAwareSecondaryButtonStyle}" Command="{Binding LoadCommand}" Margin="0,0,0,10" />
+
+                        <Border Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="8" Padding="10" MinHeight="52">
+                            <TextBlock Text="{Binding Status}" Foreground="#9A3412" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
     </Grid>
 </Window>
