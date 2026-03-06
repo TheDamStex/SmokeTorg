@@ -35,7 +35,7 @@
                 <TextBlock Text="Номер" FontWeight="SemiBold"/>
                 <TextBox Grid.Column="1" Text="{Binding Number, Mode=OneWay}" IsReadOnly="True" Margin="6,0,12,8"/>
                 <TextBlock Grid.Column="2" Text="Дата" FontWeight="SemiBold"/>
-                <TextBox Grid.Column="3" Text="{Binding ReceiptDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" IsReadOnly="True" Margin="6,0,12,8"/>
+                <TextBox Grid.Column="3" Text="{Binding ReceiptDate, Mode=OneWay, StringFormat={}{0:dd.MM.yyyy HH:mm}}" IsReadOnly="True" Margin="6,0,12,8"/>
                 <TextBlock Grid.Column="4" Text="Статус" FontWeight="SemiBold"/>
                 <TextBox Grid.Column="5" Text="{Binding Status}" IsReadOnly="True" Margin="6,0,0,8"/>
 
