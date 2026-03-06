@@ -63,7 +63,7 @@
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenProductsCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE14C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-                            <TextBlock Text="Товары" FontWeight="SemiBold"/>
+                            <TextBlock Text="Товари" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPurchasesWindowCommand}">
@@ -87,7 +87,7 @@
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenReportsCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-                            <TextBlock Text="Отчёты" FontWeight="SemiBold"/>
+                            <TextBlock Text="Звіти" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPlaceholderCommand}" CommandParameter="Анализ">
@@ -130,13 +130,13 @@
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPosCommand}" ToolTip="POS">
                         <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
-                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenProductsCommand}" ToolTip="Товары">
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenProductsCommand}" ToolTip="Товари">
                         <TextBlock Text="&#xE14C;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPurchasesWindowCommand}" ToolTip="Накладні приходу">
                         <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
-                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" ToolTip="Отчёты">
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" ToolTip="Звіти">
                         <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenSettingsCommand}" ToolTip="Налаштування БД">
@@ -296,7 +296,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE8D1;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <TextBlock Grid.Column="1" Text="Переглянути склад" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Відкрити товари та залишки" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="#FF8A00" FontSize="16" VerticalAlignment="Center" Margin="14,0,0,0"/>
                         </Grid>
                     </Button>
@@ -304,7 +304,7 @@
 
                 <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="НОВОСТИ" FontSize="20" FontWeight="Bold" Margin="0,0,0,8" Foreground="#1F2937"/>
+                        <TextBlock Text="НОВИНИ" FontSize="20" FontWeight="Bold" Margin="0,0,0,8" Foreground="#1F2937"/>
                         <ItemsControl ItemsSource="{Binding News}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
