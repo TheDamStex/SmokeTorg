@@ -1,6 +1,7 @@
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using SmokeTorg.Presentation.ViewModels;
+using SmokeTorg.Presentation.ViewModels.Dialogs;
 using SmokeTorg.Presentation.Views.Windows;
 
 namespace SmokeTorg.Presentation.Services;
@@ -9,7 +10,8 @@ public class WpfWindowService(IServiceProvider serviceProvider) : IWindowService
 {
     private readonly Dictionary<Type, Type> _windowMap = new()
     {
-        [typeof(PurchasesViewModel)] = typeof(PurchasesWindow)
+        [typeof(PurchasesViewModel)] = typeof(PurchasesWindow),
+        [typeof(PosWindowViewModel)] = typeof(PosWindow)
     };
 
     public void ShowWindow<TViewModel>(TViewModel vm) where TViewModel : class
