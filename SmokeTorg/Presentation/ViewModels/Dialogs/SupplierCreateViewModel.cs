@@ -85,7 +85,15 @@ public class SupplierCreateViewModel : ViewModelBase, IDialogRequestClose
             Note = Note.Trim()
         };
 
-        CreatedSupplier = await _supplierService.SaveAsync(supplier);
+        try
+        {
+            CreatedSupplier = await _supplierService.SaveAsync(supplier, isCreateMode: true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(ex.Message, "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
         MessageBox.Show("Постачальника успішно збережено.", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
         RequestClose?.Invoke(this, true);

@@ -7,19 +7,34 @@ public class SupplierService(ISupplierRepository supplierRepository)
 {
     public Task<List<Supplier>> GetAllAsync() => supplierRepository.GetAllAsync();
 
-    public async Task<Supplier> SaveAsync(Supplier supplier)
+    public Task<Supplier> SaveAsync(Supplier supplier) => SaveAsync(supplier, isCreateMode: false);
+
+    public async Task<Supplier> SaveAsync(Supplier supplier, bool isCreateMode)
     {
         if (string.IsNullOrWhiteSpace(supplier.Name))
             throw new InvalidOperationException("Назва постачальника обов'язкова.");
 
-        if (supplier.Id == Guid.Empty)
+        var existingSupplier = await supplierRepository.GetByIdAsync(supplier.Id);
+        var isNewSupplier = existingSupplier is null;
+
+        if (isNewSupplier)
         {
-            supplier.Id = Guid.NewGuid();
             await supplierRepository.AddAsync(supplier);
         }
         else
         {
-            await supplierRepository.UpdateAsync(supplier);
+            try
+            {
+                await supplierRepository.UpdateAsync(supplier);
+            }
+            catch (InvalidOperationException ex) when (isCreateMode && ex.Message.Contains("Запись не найдена", StringComparison.OrdinalIgnoreCase))
+            {
+                await supplierRepository.AddAsync(supplier);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Запись не найдена", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Постачальника не знайдено. Оновлення неможливе.", ex);
+            }
         }
 
         return supplier;

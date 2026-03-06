@@ -75,7 +75,7 @@ public class AddSupplierViewModel : ViewModelBase, IDialogRequestClose
             Email = Email.Trim()
         };
 
-        CreatedSupplier = await _supplierService.SaveAsync(supplier);
+        CreatedSupplier = await _supplierService.SaveAsync(supplier, isCreateMode: true);
         RequestClose?.Invoke(this, true);
     }
 }
