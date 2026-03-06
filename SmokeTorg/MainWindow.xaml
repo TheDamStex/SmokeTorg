@@ -149,7 +149,23 @@
 
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding CurrentUserInfo}" VerticalAlignment="Center" Foreground="#344054" Margin="0,0,14,0"/>
-                    <Button Content="Войти" Command="{Binding LoginCommand}" Padding="14,7" BorderBrush="#D0D5DD" BorderThickness="1" Background="White" Cursor="Hand"/>
+                    <Button Content="Вхід"
+                            Command="{Binding LoginCommand}"
+                            Visibility="{Binding IsNotAuthenticated, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Padding="14,7"
+                            BorderBrush="#D0D5DD"
+                            BorderThickness="1"
+                            Background="White"
+                            Cursor="Hand"/>
+                    <Button Content="Вийти"
+                            Command="{Binding LogoutCommand}"
+                            Visibility="{Binding IsAuthenticated, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Padding="14,7"
+                            Margin="8,0,0,0"
+                            BorderBrush="#D0D5DD"
+                            BorderThickness="1"
+                            Background="White"
+                            Cursor="Hand"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -164,17 +180,17 @@
 
             <Border Grid.Column="0" Style="{StaticResource StatusCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Пользователь" FontWeight="SemiBold" Foreground="#344054"/>
-                    <TextBlock Text="{Binding UserName}" FontWeight="Bold" Margin="0,2,0,0"/>
-                    <TextBlock Text="{Binding Role}" Foreground="#667085"/>
+                    <TextBlock Text="Користувач" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="{Binding CurrentUserLogin}" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding CurrentUserRoleDisplay}" Foreground="#667085"/>
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="1" Style="{StaticResource StatusCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Лицензия / Касса" FontWeight="SemiBold" Foreground="#344054"/>
+                    <TextBlock Text="Ліцензія / Каса" FontWeight="SemiBold" Foreground="#344054"/>
                     <TextBlock Text="{Binding LicenseInfo}" FontWeight="Bold" Margin="0,2,0,0"/>
-                    <TextBlock Text="Касса #01" Foreground="#667085"/>
+                    <TextBlock Text="Каса #01" Foreground="#667085"/>
                 </StackPanel>
             </Border>
 
@@ -190,7 +206,7 @@
                 <StackPanel>
                     <TextBlock Text="Режим" FontWeight="SemiBold" Foreground="#344054"/>
                     <TextBlock Text="{Binding ModeInfo}" FontWeight="Bold" Margin="0,2,0,0"/>
-                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#667085"/>
+                    <TextBlock Text="{Binding AccessStatus}" Foreground="#667085"/>
                 </StackPanel>
             </Border>
         </Grid>
@@ -207,9 +223,9 @@
                     <Border Width="60" Height="60" CornerRadius="30" Background="#FFF2E6" HorizontalAlignment="Left">
                         <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="#FF7A00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <TextBlock Text="{Binding UserName}" FontSize="17" FontWeight="Bold" Margin="0,12,0,2" Foreground="#1F2937"/>
-                    <TextBlock Text="{Binding Role}" Foreground="#667085"/>
-                    <TextBlock Text="&lt;без ролевого доступу&gt;" Foreground="#98A2B3" Margin="0,12,0,0"/>
+                    <TextBlock Text="{Binding CurrentUserLogin}" FontSize="17" FontWeight="Bold" Margin="0,12,0,2" Foreground="#1F2937"/>
+                    <TextBlock Text="{Binding CurrentUserRoleDisplay}" Foreground="#667085"/>
+                    <TextBlock Text="{Binding CurrentUserFullName}" Foreground="#98A2B3" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 

@@ -3,7 +3,7 @@ using SmokeTorg.Domain.Enums;
 
 namespace SmokeTorg.Application.Services;
 
-public record AuthSession(Guid UserId, string Username, UserRole Role);
+public record AuthSession(Guid UserId, string Username, UserRole Role, string FullName, bool IsActive);
 
 public class AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher)
 {
@@ -15,7 +15,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         if (user is null || !user.IsActive) return null;
         if (!passwordHasher.Verify(password, user.PasswordHash, user.Salt)) return null;
 
-        CurrentSession = new AuthSession(user.Id, user.Username, user.Role);
+        CurrentSession = new AuthSession(user.Id, user.Username, user.Role, user.FullName, user.IsActive);
         return CurrentSession;
     }
 
