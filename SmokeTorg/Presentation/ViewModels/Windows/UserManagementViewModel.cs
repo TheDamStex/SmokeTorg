@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 using SmokeTorg.Application.Interfaces;
 using SmokeTorg.Application.Services;
 using SmokeTorg.Common.Base;
+using SmokeTorg.Common.Converters;
 using SmokeTorg.Common.Commands;
 using SmokeTorg.Domain.Entities;
 using SmokeTorg.Domain.Enums;
@@ -26,6 +28,10 @@ public class UserManagementViewModel : ViewModelBase
     private UserRole _editRole = UserRole.Seller;
     private string _status = string.Empty;
 
+    private static readonly IReadOnlyList<UserRole> RoleSelection = Enum.GetValues<UserRole>()
+        .Distinct()
+        .ToArray();
+
     public UserManagementViewModel(IUserService userService, AuthService authService)
     {
         _userService = userService;
@@ -41,7 +47,12 @@ public class UserManagementViewModel : ViewModelBase
     }
 
     public ObservableCollection<UserRowViewModel> Users { get; } = [];
-    public IEnumerable<UserRole> Roles { get; } = Enum.GetValues<UserRole>();
+    public IReadOnlyList<UserRole> Roles { get; } = RoleSelection;
+    public IReadOnlyList<RoleFilterOption> RoleFilters { get; } =
+    [
+        new RoleFilterOption(null, "Усі ролі"),
+        ..RoleSelection.Select(role => new RoleFilterOption(role, RoleToUkrainianConverter.ToDisplay(role)))
+    ];
 
     public UserRole? RoleFilter
     {
@@ -292,6 +303,19 @@ public class UserManagementViewModel : ViewModelBase
         await _userService.ResetPasswordAsync(SelectedUser.Id, "Temp1234");
         Status = "Пароль скинуто до Temp1234.";
     }
+}
+
+public sealed class RoleFilterOption
+{
+    public RoleFilterOption(UserRole? role, string displayName)
+    {
+        Role = role;
+        DisplayName = displayName;
+    }
+
+    public UserRole? Role { get; }
+
+    public string DisplayName { get; }
 }
 
 public class UserRowViewModel

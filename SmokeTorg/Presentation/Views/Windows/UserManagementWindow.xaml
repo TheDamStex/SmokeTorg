@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:SmokeTorg.Common.Converters"
-        xmlns:enums="clr-namespace:SmokeTorg.Domain.Enums"
         Title="Керування користувачами"
         Height="620"
         Width="1180"
@@ -134,14 +133,10 @@
 
                     <ComboBox Grid.Column="1"
                               Padding="8,6"
-                              SelectedValuePath="Tag"
-                              SelectedValue="{Binding RoleFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                        <ComboBoxItem Content="Усі ролі" Tag="{x:Null}" />
-                        <ComboBoxItem Content="Адміністратор" Tag="{x:Static enums:UserRole.Admin}" />
-                        <ComboBoxItem Content="Керівник" Tag="{x:Static enums:UserRole.Manager}" />
-                        <ComboBoxItem Content="Продавець" Tag="{x:Static enums:UserRole.Seller}" />
-                        <ComboBoxItem Content="Продавець" Tag="{x:Static enums:UserRole.Cashier}" />
-                    </ComboBox>
+                              ItemsSource="{Binding RoleFilters}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Role"
+                              SelectedValue="{Binding RoleFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
 
                 <DataGrid Grid.Row="2"
