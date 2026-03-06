@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
-using SmokeTorg.Domain.Enums;
+using PurchaseStatus = SmokeTorg.Domain.Enums.DocumentStatus;
 
 namespace SmokeTorg.Common.Converters;
 
@@ -8,98 +8,76 @@ public class PurchaseStatusToUkrainianConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (!TryGetStatus(value, out var status))
+        if (value is PurchaseStatus status)
         {
-            return "Усі статуси";
+            return ToUkrainian(status);
         }
 
-        return ToDisplay(status);
+        if (value is string text)
+        {
+            if (TryParseStatus(text, out var parsedStatus))
+            {
+                return ToUkrainian(parsedStatus);
+            }
+        }
+
+        return string.Empty;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (!TryParseStatus(value, out var status))
+        if (value is PurchaseStatus status)
         {
-            if (IsNullableTarget(targetType))
-            {
-                return null;
-            }
-
-            return Binding.DoNothing;
+            return status;
         }
 
-        return status;
+        if (value is string text)
+        {
+            if (TryParseStatus(text, out var parsedStatus))
+            {
+                return parsedStatus;
+            }
+        }
+
+        return Binding.DoNothing;
     }
 
-    public static string ToDisplay(DocumentStatus status)
+    private static string ToUkrainian(PurchaseStatus status)
     {
         switch (status)
         {
-            case DocumentStatus.Draft:
+            case PurchaseStatus.Draft:
                 return "Чернетка";
-            case DocumentStatus.Posted:
+            case PurchaseStatus.Posted:
                 return "Проведено";
-            case DocumentStatus.Cancelled:
+            case PurchaseStatus.Cancelled:
                 return "Скасовано";
             default:
-                return status.ToString();
+                return string.Empty;
         }
     }
 
-    private static bool TryGetStatus(object? value, out DocumentStatus status)
+    private static bool TryParseStatus(string value, out PurchaseStatus status)
     {
-        if (value is DocumentStatus directStatus)
-        {
-            status = directStatus;
-            return true;
-        }
-
-        if (value is DocumentStatus? nullableStatus && nullableStatus.HasValue)
-        {
-            status = nullableStatus.Value;
-            return true;
-        }
-
-        if (value is string stringValue)
-        {
-            return TryParseStatus(stringValue, out status);
-        }
-
-        status = default;
-        return false;
-    }
-
-    private static bool TryParseStatus(object? value, out DocumentStatus status)
-    {
-        if (value is not string rawValue)
-        {
-            status = default;
-            return false;
-        }
-
-        var normalized = rawValue.Trim();
+        var normalized = value.Trim();
 
         switch (normalized)
         {
             case "Чернетка":
             case "Draft":
-                status = DocumentStatus.Draft;
+                status = PurchaseStatus.Draft;
                 return true;
             case "Проведено":
             case "Posted":
-                status = DocumentStatus.Posted;
+                status = PurchaseStatus.Posted;
                 return true;
             case "Скасовано":
             case "Cancelled":
-                status = DocumentStatus.Cancelled;
+                status = PurchaseStatus.Cancelled;
                 return true;
             default:
-                return Enum.TryParse(normalized, true, out status);
+                status = default;
+                return false;
         }
-    }
-
-    private static bool IsNullableTarget(Type targetType)
-    {
-        return Nullable.GetUnderlyingType(targetType) is not null;
     }
 }
