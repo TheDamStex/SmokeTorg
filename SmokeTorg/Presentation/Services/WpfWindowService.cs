@@ -21,10 +21,10 @@ public class WpfWindowService(IServiceProvider serviceProvider) : IWindowService
 
         var window = (Window)serviceProvider.GetRequiredService(windowType);
         window.DataContext = vm;
-        window.Owner = Application.Current.Windows
+        window.Owner = System.Windows.Application.Current.Windows
             .OfType<Window>()
             .FirstOrDefault(w => w.IsActive)
-            ?? Application.Current.MainWindow;
+            ?? System.Windows.Application.Current.MainWindow;
         window.Show();
     }
 }
