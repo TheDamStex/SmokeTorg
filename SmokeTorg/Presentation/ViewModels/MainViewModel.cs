@@ -21,7 +21,6 @@ public class MainViewModel : ViewModelBase
     private readonly PurchasesViewModel _purchasesVm;
     private readonly PlaceholderViewModel _placeholderVm;
     private readonly IDialogService _dialogService;
-    private readonly GoodsReceiptViewModel _goodsReceiptViewModel;
     private readonly PosWindowViewModel _posWindowViewModel;
     private readonly StockViewModel _stockViewModel;
     private readonly IServiceProvider _serviceProvider;
@@ -41,7 +40,6 @@ public class MainViewModel : ViewModelBase
         PurchasesViewModel purchasesVm,
         PlaceholderViewModel placeholderVm,
         IDialogService dialogService,
-        GoodsReceiptViewModel goodsReceiptViewModel,
         PosWindowViewModel posWindowViewModel,
         StockViewModel stockViewModel,
         IServiceProvider serviceProvider,
@@ -53,7 +51,6 @@ public class MainViewModel : ViewModelBase
         _purchasesVm = purchasesVm;
         _placeholderVm = placeholderVm;
         _dialogService = dialogService;
-        _goodsReceiptViewModel = goodsReceiptViewModel;
         _posWindowViewModel = posWindowViewModel;
         _stockViewModel = stockViewModel;
         _serviceProvider = serviceProvider;
@@ -89,18 +86,14 @@ public class MainViewModel : ViewModelBase
 
         OpenPOSCommand = new RelayCommand(_ => OpenModule(_posVm));
         OpenProductsCommand = new RelayCommand(_ => OpenModule(_productsVm));
-        OpenPurchasesCommand = new RelayCommand(_ => OpenModule(_purchasesVm));
+        OpenPurchasesCommand = new AsyncRelayCommand(async _ => await OpenPurchasesModuleAsync());
         OpenReportsCommand = new RelayCommand(_ => OpenPlaceholder("Звіти"));
         OpenSettingsCommand = new RelayCommand(_ => OpenDbSettings());
         OpenUserManagementCommand = new RelayCommand(_ => OpenUserManagement());
         OpenPlaceholderCommand = new RelayCommand(p => OpenPlaceholder(p?.ToString() ?? "Модуль"));
         OpenHomeCommand = new RelayCommand(_ => OpenHome());
 
-        OpenGoodsReceiptCommand = new AsyncRelayCommand(async _ =>
-        {
-            await _goodsReceiptViewModel.InitializeAsync();
-            _dialogService.ShowDialog(_goodsReceiptViewModel);
-        });
+        OpenGoodsReceiptCommand = new AsyncRelayCommand(async _ => await OpenPurchasesModuleAsync());
 
         OpenPosCommand = new RelayCommand(_ => _dialogService.ShowDialog(_posWindowViewModel));
         OpenStockCommand = new AsyncRelayCommand(async _ =>
@@ -168,7 +161,7 @@ public class MainViewModel : ViewModelBase
     public AsyncRelayCommand LogoutCommand { get; }
     public RelayCommand OpenPOSCommand { get; }
     public RelayCommand OpenProductsCommand { get; }
-    public RelayCommand OpenPurchasesCommand { get; }
+    public AsyncRelayCommand OpenPurchasesCommand { get; }
     public RelayCommand OpenReportsCommand { get; }
     public RelayCommand OpenSettingsCommand { get; }
     public RelayCommand OpenPlaceholderCommand { get; }
@@ -210,7 +203,7 @@ public class MainViewModel : ViewModelBase
                 OpenModule(_productsVm);
                 break;
             case "Purchases":
-                OpenModule(_purchasesVm);
+                _ = OpenPurchasesModuleAsync();
                 break;
             case "Home":
                 OpenHome();
@@ -231,6 +224,12 @@ public class MainViewModel : ViewModelBase
     {
         CurrentViewModel = _placeholderVm.WithTitle(title);
         IsHomeView = false;
+    }
+
+    private async Task OpenPurchasesModuleAsync()
+    {
+        await _purchasesVm.LoadAsync();
+        OpenModule(_purchasesVm);
     }
 
     private void OpenHome()

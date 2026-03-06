@@ -26,9 +26,18 @@ public class SaleItem
 
 public class Purchase : BaseEntity
 {
+    public string Number { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime ReceiptDate { get; set; } = DateTime.Now;
     public Guid SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+    public Guid CreatedByUserId { get; set; }
+    public string CreatedByLogin { get; set; } = string.Empty;
+    public Guid AcceptedByUserId { get; set; }
+    public string AcceptedByLogin { get; set; } = string.Empty;
     public DateTime Date { get; set; } = DateTime.Now;
     public List<PurchaseItem> Items { get; set; } = [];
+    public decimal TotalAmount { get; set; }
     public decimal Total { get; set; }
     public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
 }

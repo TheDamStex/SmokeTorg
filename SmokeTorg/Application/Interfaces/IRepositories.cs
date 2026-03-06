@@ -28,7 +28,10 @@ public interface IUserRepository : IRepository<User>
 }
 
 public interface ISaleRepository : IRepository<Sale>;
-public interface IPurchaseRepository : IRepository<Purchase>;
+public interface IPurchaseRepository : IRepository<Purchase>
+{
+    Task<string> GetNextNumberAsync(DateTime date);
+}
 public interface ISettingsRepository : IRepository<AppSettings>;
 
 public interface IStockRepository

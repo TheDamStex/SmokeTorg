@@ -1,14 +1,13 @@
 <Window x:Class="SmokeTorg.Presentation.Views.Windows.GoodsReceiptWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Почати прихід товару"
-        Height="680"
-        Width="1080"
+        Title="Редагування накладної приходу"
+        Height="720"
+        Width="1180"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
-        UseLayoutRounding="True"
         Background="{StaticResource WindowBackgroundBrush}">
-    <Grid Margin="24">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -16,155 +15,101 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Почати прихід товару"
-                   FontSize="28"
-                   FontWeight="SemiBold"
-                   Foreground="#222"/>
+        <TextBlock Text="Накладна приходу" FontSize="26" FontWeight="SemiBold"/>
 
-        <Border Grid.Row="1"
-                Style="{StaticResource CardStyle}"
-                Margin="0,16,0,16"
-                Padding="20">
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,12,0,12">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="220"/>
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.3*"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <ComboBox ItemsSource="{Binding Suppliers}"
-                          Style="{StaticResource AppComboBoxStyle}"
-                          SelectedItem="{Binding SelectedSupplier, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+
+                <TextBlock Text="Номер" FontWeight="SemiBold"/>
+                <TextBox Grid.Column="1" Text="{Binding Number}" IsReadOnly="True" Margin="6,0,12,8"/>
+                <TextBlock Grid.Column="2" Text="Дата" FontWeight="SemiBold"/>
+                <TextBox Grid.Column="3" Text="{Binding ReceiptDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" IsReadOnly="True" Margin="6,0,12,8"/>
+                <TextBlock Grid.Column="4" Text="Статус" FontWeight="SemiBold"/>
+                <TextBox Grid.Column="5" Text="{Binding Status}" IsReadOnly="True" Margin="6,0,0,8"/>
+
+                <TextBlock Grid.Row="1" Text="Постачальник" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                          ItemsSource="{Binding Suppliers}"
+                          SelectedItem="{Binding SelectedSupplier}"
                           DisplayMemberPath="Name"
-                          Height="38"/>
-
-                <Grid Grid.Column="1" Margin="12,0,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Style="{StaticResource AppTextBoxStyle}"
-                             Height="38"
-                             Text="{Binding ProductSearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                    <Button Grid.Column="1"
-                            Margin="8,0,0,0"
-                            Content="Пошук"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding SearchProductCommand}"/>
-                </Grid>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0">
-                    <ComboBox Width="250"
-                              Style="{StaticResource AppComboBoxStyle}"
-                              Height="38"
-                              ItemsSource="{Binding ProductSearchResults}"
-                              DisplayMemberPath="Name"
-                              SelectedItem="{Binding SelectedSearchProduct}"/>
-                    <Button Content="Додати"
-                            Margin="8,0,0,0"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding AddProductCommand}"
-                            CommandParameter="{Binding SelectedSearchProduct}"/>
-                    <Button Content="Додати постачальника"
-                            Margin="8,0,0,0"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding AddSupplierCommand}"/>
+                          IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"
+                          Margin="6,0,12,0"/>
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="Створив" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding CreatedByLogin}" IsReadOnly="True" Margin="6,0,12,0"/>
+                <StackPanel Grid.Row="1" Grid.Column="5">
+                    <TextBlock Text="Приймає" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding AcceptedByLogin}" IsReadOnly="True"/>
                 </StackPanel>
+            </Grid>
+        </Border>
 
-                <Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="0,12,0,0">
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Style="{StaticResource CardStyle}" Padding="12" Margin="0,0,0,10">
+                <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="230"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBox Style="{StaticResource AppTextBoxStyle}"
-                             Height="38"
-                             Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Штрихкод">
-                        <TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding AddByBarcodeCommand}"/>
-                        </TextBox.InputBindings>
-                    </TextBox>
-                    <Button Grid.Column="1"
-                            Margin="8,0,0,0"
-                            Content="Додати за штрихкодом"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding AddByBarcodeCommand}"/>
-                    <TextBlock Grid.Column="2"
-                               Margin="12,0,0,0"
-                               VerticalAlignment="Center"
-                               Foreground="#666"
-                               Text="Пошук за назвою залишається як вторинний сценарій."/>
+                    <TextBox Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}" Height="34" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"/>
+                    <Button Grid.Column="1" Content="Додати за штрихкодом" Margin="8,0" Command="{Binding AddByBarcodeCommand}"/>
+                    <TextBox Grid.Column="2" Text="{Binding ProductSearchText, UpdateSourceTrigger=PropertyChanged}" Height="34"/>
+                    <Button Grid.Column="3" Content="Пошук" Margin="8,0" Command="{Binding SearchProductCommand}"/>
+                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                        <ComboBox Width="260" ItemsSource="{Binding ProductSearchResults}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSearchProduct}"/>
+                        <Button Content="Додати товар" Margin="8,0" Command="{Binding AddProductCommand}" CommandParameter="{Binding SelectedSearchProduct}"/>
+                        <Button Content="Додати постачальника" Command="{Binding AddSupplierCommand}"/>
+                    </StackPanel>
                 </Grid>
-            </Grid>
-        </Border>
+            </Border>
 
-        <Border Grid.Row="2"
-                Style="{StaticResource CardStyle}"
-                Padding="0">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="360">
-                <DataGrid Style="{StaticResource AppDataGridStyle}"
-                          ItemsSource="{Binding Items}"
-                          AutoGenerateColumns="False"
-                          Margin="0"
-                          BorderThickness="0">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="К-сть" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" Width="120"/>
-                        <DataGridTextColumn Header="Ціна закупівлі" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" Width="170"/>
-                        <DataGridTextColumn Header="Сума" Binding="{Binding Sum}" Width="140" IsReadOnly="True"/>
-                        <DataGridTemplateColumn Header="" Width="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="🗑"
-                                            FontSize="14"
-                                            Width="34"
-                                            Height="30"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </ScrollViewer>
-        </Border>
-
-        <Grid Grid.Row="3" Margin="0,16,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <TextBlock Grid.Row="0"
-                       HorizontalAlignment="Right"
-                       Text="{Binding Total, StringFormat='Разом: {0:N2}'}"
-                       FontSize="22"
-                       FontWeight="SemiBold"
-                       Foreground="#FF7A00"/>
-
-            <StackPanel Grid.Row="1"
-                        Margin="0,14,0,0"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right">
-                <Button Content="Зберегти як чернетку"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding SaveDraftCommand}"/>
-                <Button Content="Скасувати"
-                        Margin="12,0,0,0"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding CancelCommand}"/>
-                <Button Content="Провести"
-                        Margin="12,0,0,0"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{Binding PostCommand}"
-                        IsEnabled="{Binding HasErrors, Converter={StaticResource InverseBoolConverter}}"/>
-            </StackPanel>
+            <DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding Items}" CanUserAddRows="False" IsReadOnly="{Binding IsReadOnly}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="К-сть" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                    <DataGridTextColumn Header="Ціна закупівлі" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                    <DataGridTextColumn Header="Сума" Binding="{Binding Sum}" Width="130" IsReadOnly="True"/>
+                    <DataGridTemplateColumn Header="" Width="90">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Видалити"
+                                        Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
+
+        <DockPanel Grid.Row="3" Margin="0,14,0,0">
+            <TextBlock Text="{Binding Total, StringFormat=Разом: {0:N2}}" FontSize="22" FontWeight="SemiBold" Foreground="#FF7A00" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                <Button Content="Зберегти як чернетку" Command="{Binding SaveDraftCommand}" Margin="0,0,8,0"/>
+                <Button Content="Провести" Command="{Binding PostCommand}" Margin="0,0,8,0"/>
+                <Button Content="Скасувати накладну" Command="{Binding CancelReceiptCommand}" Margin="0,0,8,0"/>
+                <Button Content="Закрити" Command="{Binding CloseCommand}"/>
+            </StackPanel>
+        </DockPanel>
     </Grid>
 </Window>
