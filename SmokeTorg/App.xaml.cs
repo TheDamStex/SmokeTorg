@@ -119,6 +119,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<DataSeeder>();
 
         services.AddSingleton<IDialogService, WpfDialogService>();
+        services.AddSingleton<IWindowService, WpfWindowService>();
 
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<LoginViewModel>();
@@ -146,6 +147,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<LoginWindow>();
         services.AddTransient<UserManagementWindow>();
         services.AddTransient<DbSettingsWindow>();
+        services.AddTransient<PurchasesWindow>();
 
         services.AddSingleton<MainWindow>();
     }

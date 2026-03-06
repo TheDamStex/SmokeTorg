@@ -19,9 +19,6 @@
         <DataTemplate DataType="{x:Type vm:ProductsViewModel}">
             <views:ProductsView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:PurchasesViewModel}">
-            <views:PurchasesView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
             <views:PlaceholderView/>
         </DataTemplate>
@@ -69,10 +66,10 @@
                             <TextBlock Text="Товары" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenGoodsReceiptCommand}">
+                    <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPurchasesWindowCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-                            <TextBlock Text="Документы" FontWeight="SemiBold"/>
+                            <TextBlock Text="Документи" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource RibbonMenuButtonStyle}" Command="{Binding OpenPosCommand}">
@@ -136,7 +133,7 @@
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenProductsCommand}" ToolTip="Товары">
                         <TextBlock Text="&#xE14C;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
-                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenGoodsReceiptCommand}" ToolTip="Закупки">
+                    <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenPurchasesWindowCommand}" ToolTip="Накладні приходу">
                         <TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                     </Button>
                     <Button Style="{StaticResource QuickIconButtonStyle}" Command="{Binding OpenReportsCommand}" ToolTip="Отчёты">
@@ -267,7 +264,7 @@
                 </Border>
 
                 <WrapPanel Grid.Row="1" Margin="0,0,0,12">
-                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenGoodsReceiptCommand}">
+                    <Button Style="{StaticResource LinkActionButtonStyle}" Command="{Binding OpenPurchasesWindowCommand}">
                         <Grid MinWidth="250">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
