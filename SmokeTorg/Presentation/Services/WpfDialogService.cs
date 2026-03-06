@@ -36,8 +36,21 @@ public class WpfDialogService(IServiceProvider serviceProvider) : IDialogService
             void OnRequestClose(object? _, bool? dialogResult)
             {
                 closable.RequestClose -= OnRequestClose;
-                window.DialogResult = dialogResult;
-                window.Close();
+
+                if (dialogResult is null)
+                {
+                    window.Close();
+                    return;
+                }
+
+                try
+                {
+                    window.DialogResult = dialogResult;
+                }
+                catch (InvalidOperationException)
+                {
+                    window.Close();
+                }
             }
 
             closable.RequestClose += OnRequestClose;
