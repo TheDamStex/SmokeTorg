@@ -13,12 +13,7 @@ public class RoleToUkrainianConverter : IValueConverter
             return ToDisplay(role);
         }
 
-        if (value is UserRole? nullableRole && nullableRole.HasValue)
-        {
-            return ToDisplay(nullableRole.Value);
-        }
-
-        return "Усі ролі";
+        return string.Empty;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -26,12 +21,23 @@ public class RoleToUkrainianConverter : IValueConverter
         throw new NotSupportedException();
     }
 
-    public static string ToDisplay(UserRole role) => role switch
+    public static string ToDisplay(UserRole role)
     {
-        UserRole.Admin => "Адміністратор",
-        UserRole.Manager => "Керівник",
-        UserRole.Seller => "Продавець",
-        UserRole.Cashier => "Продавець",
-        _ => role.ToString()
-    };
+        if (role == UserRole.Admin)
+        {
+            return "Адміністратор";
+        }
+
+        if (role == UserRole.Manager)
+        {
+            return "Керівник";
+        }
+
+        if (role == UserRole.Seller || role == UserRole.Cashier)
+        {
+            return "Продавець";
+        }
+
+        return role.ToString();
+    }
 }
