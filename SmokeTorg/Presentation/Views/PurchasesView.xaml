@@ -46,9 +46,9 @@
 
             <Border Background="White" Padding="10" CornerRadius="10" Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
-                    <ComboBox Width="250" Margin="0,0,8,0" ItemsSource="{Binding Suppliers}" SelectedItem="{Binding SelectedCreateSupplier}" DisplayMemberPath="Name"/>
-                    <Button Content="Створити накладну" Command="{Binding CreateDraftCommand}"/>
-                    <Button Content="Відкрити вибрану" Command="{Binding OpenSelectedCommand}" Margin="8,0,0,0"/>
+                    <ComboBox Width="250" Margin="0,0,8,0" Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding Suppliers}" SelectedItem="{Binding SelectedCreateSupplier, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" DisplayMemberPath="Name"/>
+                    <Button Content="Створити накладну" Command="{Binding CreateDraftCommand}" IsEnabled="{Binding CanCreateInvoice}"/>
+                    <Button Content="Відкрити вибрану" Command="{Binding OpenSelectedCommand}" IsEnabled="{Binding CanOpenSelected}" Margin="8,0,0,0"/>
                 </StackPanel>
             </Border>
 

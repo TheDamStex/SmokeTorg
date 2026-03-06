@@ -36,8 +36,8 @@ public class PurchasesViewModel : ViewModelBase
         _dialogService = dialogService;
 
         RefreshCommand = new AsyncRelayCommand(async _ => await LoadAsync());
-        CreateDraftCommand = new AsyncRelayCommand(async _ => await CreateDraftAsync(), _ => SelectedCreateSupplier is not null);
-        OpenSelectedCommand = new AsyncRelayCommand(async _ => await OpenSelectedAsync(), _ => Selected is not null);
+        CreateDraftCommand = new AsyncRelayCommand(async _ => await CreateDraftAsync(), _ => CanCreateInvoice);
+        OpenSelectedCommand = new AsyncRelayCommand(async _ => await OpenSelectedAsync(), _ => CanOpenSelected);
         ApplyFiltersCommand = new RelayCommand(_ => ApplyFilters());
         ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
     }
@@ -60,6 +60,7 @@ public class PurchasesViewModel : ViewModelBase
         {
             if (SetProperty(ref _selected, value))
             {
+                OnPropertyChanged(nameof(CanOpenSelected));
                 OpenSelectedCommand.RaiseCanExecuteChanged();
             }
         }
@@ -73,12 +74,16 @@ public class PurchasesViewModel : ViewModelBase
         {
             if (SetProperty(ref _selectedCreateSupplier, value))
             {
+                OnPropertyChanged(nameof(CanCreateInvoice));
                 CreateDraftCommand.RaiseCanExecuteChanged();
             }
         }
     }
 
     public DocumentStatus? SelectedFilterStatus { get => _selectedFilterStatus; set => SetProperty(ref _selectedFilterStatus, value); }
+
+    public bool CanCreateInvoice => SelectedCreateSupplier is not null;
+    public bool CanOpenSelected => Selected is not null;
     public DateTime? FromDate { get => _fromDate; set => SetProperty(ref _fromDate, value); }
     public DateTime? ToDate { get => _toDate; set => SetProperty(ref _toDate, value); }
     public string NumberSearch { get => _numberSearch; set => SetProperty(ref _numberSearch, value); }

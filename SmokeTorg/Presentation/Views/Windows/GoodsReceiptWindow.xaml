@@ -30,28 +30,42 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Text="Номер" FontWeight="SemiBold"/>
-                <TextBox Grid.Column="1" Text="{Binding Number, Mode=OneWay}" IsReadOnly="True" Margin="6,0,12,8"/>
+                <TextBox Grid.Column="1" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Number, Mode=OneWay, ValidatesOnNotifyDataErrors=True}" IsReadOnly="True" Margin="6,0,12,8"/>
                 <TextBlock Grid.Column="2" Text="Дата" FontWeight="SemiBold"/>
-                <TextBox Grid.Column="3" Text="{Binding ReceiptDate, Mode=OneWay, StringFormat={}{0:dd.MM.yyyy HH:mm}}" IsReadOnly="True" Margin="6,0,12,8"/>
+                <TextBox Grid.Column="3" Style="{StaticResource AppTextBoxStyle}" Text="{Binding ReceiptDate, Mode=OneWay, StringFormat={}{0:dd.MM.yyyy HH:mm}, ValidatesOnNotifyDataErrors=True}" IsReadOnly="True" Margin="6,0,12,8"/>
                 <TextBlock Grid.Column="4" Text="Статус" FontWeight="SemiBold"/>
-                <TextBox Grid.Column="5" Text="{Binding Status, Mode=OneWay}" IsReadOnly="True" Margin="6,0,0,8"/>
+                <TextBox Grid.Column="5" Style="{StaticResource AppTextBoxStyle}" Text="{Binding Status, Mode=OneWay, ValidatesOnNotifyDataErrors=True}" IsReadOnly="True" Margin="6,0,0,8"/>
 
                 <TextBlock Grid.Row="1" Text="Постачальник" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                <ComboBox x:Name="SupplierComboBox"
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Style="{StaticResource AppComboBoxStyle}"
                           ItemsSource="{Binding Suppliers}"
-                          SelectedItem="{Binding SelectedSupplier}"
+                          SelectedItem="{Binding SelectedSupplier, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
                           DisplayMemberPath="Name"
                           IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"
                           Margin="6,0,12,0"/>
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="Створив" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding CreatedByLogin, Mode=OneWay}" IsReadOnly="True" Margin="6,0,12,0"/>
+                <TextBox Grid.Row="1" Grid.Column="4" Style="{StaticResource AppTextBoxStyle}" Text="{Binding CreatedByLogin, Mode=OneWay}" IsReadOnly="True" Margin="6,0,12,0"/>
                 <StackPanel Grid.Row="1" Grid.Column="5">
                     <TextBlock Text="Приймає" FontWeight="SemiBold"/>
-                    <TextBox Text="{Binding AcceptedByLogin, Mode=OneWay}" IsReadOnly="True"/>
+                    <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding AcceptedByLogin, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
+
+                <TextBlock Grid.Row="2"
+                           Grid.Column="1"
+                           Grid.ColumnSpan="2"
+                           Margin="6,4,12,0"
+                           Foreground="#D92D20"
+                           FontSize="12"
+                           Text="{Binding (Validation.Errors)[0].ErrorContent, ElementName=SupplierComboBox}"
+                           Visibility="{Binding (Validation.HasError), ElementName=SupplierComboBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
         </Border>
 
@@ -70,24 +84,32 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBox Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}" Height="34" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"/>
+                    <TextBox Style="{StaticResource AppTextBoxStyle}" Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}" Height="34" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"/>
                     <Button Grid.Column="1" Content="Додати за штрихкодом" Margin="8,0" Command="{Binding AddByBarcodeCommand}"/>
-                    <TextBox Grid.Column="2" Text="{Binding ProductSearchText, UpdateSourceTrigger=PropertyChanged}" Height="34"/>
+                    <TextBox Grid.Column="2" Style="{StaticResource AppTextBoxStyle}" Text="{Binding ProductSearchText, UpdateSourceTrigger=PropertyChanged}" Height="34" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"/>
                     <Button Grid.Column="3" Content="Пошук" Margin="8,0" Command="{Binding SearchProductCommand}"/>
                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                        <ComboBox Width="260" ItemsSource="{Binding ProductSearchResults}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSearchProduct}"/>
+                        <ComboBox Width="260" Style="{StaticResource AppComboBoxStyle}" ItemsSource="{Binding ProductSearchResults}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSearchProduct}" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"/>
                         <Button Content="Додати товар" Margin="8,0" Command="{Binding AddProductCommand}" CommandParameter="{Binding SelectedSearchProduct}"/>
                         <Button Content="Додати постачальника" Command="{Binding AddSupplierCommand}"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding Items}" CanUserAddRows="False" IsReadOnly="{Binding IsReadOnly}">
+            <DataGrid Grid.Row="1" Style="{StaticResource AppDataGridStyle}" AutoGenerateColumns="False" ItemsSource="{Binding Items}" CanUserAddRows="False" IsReadOnly="{Binding IsReadOnly}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
                     <DataGridTextColumn Header="Штрихкод" Binding="{Binding Barcode}" Width="150" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="К-сть" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                    <DataGridTextColumn Header="Ціна закупівлі" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                    <DataGridTextColumn Header="К-сть" Width="120" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource AppTextBoxStyle}"/>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Ціна закупівлі" Width="150" Binding="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <DataGridTextColumn.EditingElementStyle>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource AppTextBoxStyle}"/>
+                        </DataGridTextColumn.EditingElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="Сума" Binding="{Binding Sum, Mode=OneWay}" Width="130" IsReadOnly="True"/>
                     <DataGridTemplateColumn Header="" Width="90">
                         <DataGridTemplateColumn.CellTemplate>
@@ -102,8 +124,11 @@
             </DataGrid>
         </Grid>
 
-        <DockPanel Grid.Row="3" Margin="0,14,0,0">
-            <TextBlock Text="{Binding Total, StringFormat=Разом: {0:N2}}" FontSize="22" FontWeight="SemiBold" Foreground="#FF7A00" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+        <DockPanel Grid.Row="3" Margin="0,14,0,0" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="{Binding Total, StringFormat=Разом: {0:N2}}" FontSize="22" FontWeight="SemiBold" Foreground="#FF7A00" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding FormValidationMessage}" Foreground="#D92D20" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap" MaxWidth="500"/>
+            </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                 <Button Content="Зберегти як чернетку" Command="{Binding SaveDraftCommand}" Margin="0,0,8,0"/>
                 <Button Content="Провести" Command="{Binding PostCommand}" Margin="0,0,8,0"/>
